@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/opengeospatial/bblocks-postprocess/master/ogc/bblocks/metadata-schema.yaml",
+  "itemIdentifier": "ogc.ospd2026.provenance-profile.processing-activities",
+  "name": "OSPD 2026 Processing Activity Provenance Profile",
+  "abstract": "Domain-agnostic provenance profile for geospatial processing activities based on W3C PROV with controlled process-type references.",
+  "status": "under-development",
+  "version": "0.1.0",
+  "itemClass": "schema",
+  "scope": "pilot",
+  "tags": [
+    "ospd",
+    "provenance",
+    "prov",
+    "workflow",
+    "json-ld",
+    "process-type-register"
+  ],
+  "dependsOn": [
+    "ogc.ogc-utils.prov"
+  ],
+  "ldContext": "context/osdp-prov-context.jsonld",
+  "schema": {
+    "application/json": "schema/provenance-profile.schema.json"
+  },
+  "sourceLdContext": "context/osdp-prov-context.jsonld",
+  "sourceSchema": "schema/provenance-profile.schema.json",
+  "examples": [
+    {
+      "title": "Workflow provenance with registered process types",
+      "snippets": [
+        {
+          "language": "json",
+          "ref": "examples/workflow-provenance-example.json",
+          "code": "See examples/workflow-provenance-example.json"
+        }
+      ]
+    }
+  ]
+}

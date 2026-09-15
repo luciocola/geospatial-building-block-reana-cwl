@@ -1,0 +1,34 @@
+{
+  "mappings": [
+    {
+      "source": "https://example.org/ospd/2026/process-types/radiometric-preprocessing",
+      "relation": "closeMatch",
+      "target": "https://openeo.org/documentation/1.0/processes.html#atmospheric_correction",
+      "vocabulary": "OpenEO"
+    },
+    {
+      "source": "https://example.org/ospd/2026/process-types/image-classification",
+      "relation": "exactMatch",
+      "target": "http://aims.fao.org/aos/agrovoc/c_331401",
+      "vocabulary": "AGROVOC"
+    },
+    {
+      "source": "https://example.org/ospd/2026/process-types/geometric-correction",
+      "relation": "closeMatch",
+      "target": "https://gcmd.earthdata.nasa.gov/kms/concept/2aab4d56-08e0-4db3-a4d2-4f8305e74b50",
+      "vocabulary": "NASA GCMD"
+    },
+    {
+      "source": "https://example.org/ospd/2026/process-types/image-classification",
+      "relation": "broader",
+      "target": "https://example.org/ospd/2026/process-types/quality-assessment",
+      "vocabulary": "OSPD Register"
+    },
+    {
+      "source": "https://example.org/ospd/2026/process-types/radiometric-preprocessing",
+      "relation": "narrower",
+      "target": "https://example.org/ospd/2026/process-types/geometric-correction",
+      "vocabulary": "OSPD Register"
+    }
+  ]
+}

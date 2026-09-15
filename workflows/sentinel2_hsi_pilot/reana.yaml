@@ -1,0 +1,23 @@
+version: 0.9.0
+inputs:
+  files:
+    - workflow.cwl
+    - steps/ingest_sentinel2.cwl
+    - steps/preprocess_hsi.cwl
+    - steps/classify_hsi.cwl
+    - steps/package_provenance.cwl
+    - scripts/ingest_sentinel2.py
+    - scripts/preprocess_hsi.py
+    - scripts/classify_hsi.py
+    - scripts/package_provenance.py
+    - examples/aoi.geojson
+    - examples/workflow-inputs.yml
+workflow:
+  type: cwl
+  file: workflow.cwl
+outputs:
+  files:
+    - hsi_classification.geojson
+    - stac_item.json
+    - provenance_bundle.json
+    - workflow_prov_profile.json

@@ -1,0 +1,246 @@
+{
+  "id": "ospd-geospatial-bblocks-kernel",
+  "title": "OSPD 2026 Geospatial Building Blocks Kernel",
+  "description": "Kernel model that links process execution, provenance profile outputs, and process-type semantics.",
+  "version": "0.1.0",
+  "functionalContract": {
+    "principle": "Conformance is defined by required behavior and evidence, not by one fixed input metadata schema.",
+    "requiredCapabilities": [
+      "accept a declared input profile",
+      "map the declared profile to the algorithm input contract",
+      "execute the declared process or return a structured validation failure",
+      "publish typed outputs with references to their source and execution evidence"
+    ],
+    "minimumSemantics": [
+      "input identity",
+      "input or output spatial, temporal, or coverage scope",
+      "algorithm or process identity",
+      "output identity",
+      "execution status"
+    ],
+    "inputProfiles": [
+      {
+        "id": "stac",
+        "schema": "https://stacspec.org/en/about/stac-spec/",
+        "optionalExtensions": ["liability-claims", "eo", "proj", "scientific"]
+      },
+      {"id": "geojson", "schema": "https://geojson.org/schema/FeatureCollection.json"},
+      {"id": "raster", "schema": "https://www.ogc.org/standard/geotiff/"},
+      {"id": "custom", "schema": "profile-supplied", "mapping": "profile-supplied"}
+    ],
+    "algorithmContract": {
+      "required": ["algorithm identity", "accepted input semantics", "declared output semantics"],
+      "optional": ["parameters schema", "model reference", "software reference", "runtime constraints"],
+      "rule": "Algorithm-specific fields remain inside the selected profile and must not become kernel-wide required metadata."
+    },
+    "evidenceContract": {
+      "required": ["execution identifier", "input references", "output references", "validation result"],
+      "optional": ["liability claim", "quality report", "W3C PROV record", "security classification", "access restrictions"],
+      "liabilityClaimsProfile": {
+        "schema": "https://luciocola.github.io/stac-extension-liability-claims/v1.8.0/schema.json",
+        "use": "Attach liability, quality, provenance, and access evidence when supplied by the source or required by policy; do not require unrelated claim fields."
+      }
+    },
+    "conformanceClasses": [
+      {
+        "id": "functional-core",
+        "requires": ["minimumSemantics", "algorithmContract", "evidenceContract.required"]
+      },
+      {
+        "id": "profile-adapter",
+        "requires": ["declared input profile", "profile-to-algorithm mapping", "mapping validation result"]
+      },
+      {
+        "id": "liability-claims-evidence",
+        "standard": "https://luciocola.github.io/stac-extension-liability-claims/v1.8.0/schema.json",
+        "requires": ["valid liability-claims extension payload when liability evidence is present"]
+      }
+    ]
+  },
+  "interfaceBindings": {
+    "rest": {
+      "description": "Plain HTTP/JSON access (job/result polling, register lookups) usable by any HTTP client regardless of API style.",
+      "conformsTo": []
+    },
+    "ogcapi-processes": {
+      "description": "OGC API - Processes 1.0 execution model (/processes, /jobs/*) for synchronous or async job control.",
+      "conformsTo": ["http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/core"]
+    },
+    "ogcapi-records": {
+      "description": "OGC API - Records-like access for process-type register entries (/collections/process-types/items).",
+      "conformsTo": ["http://www.opengis.net/spec/ogcapi-records-1/1.0/conf/core"]
+    },
+    "ogcapi-features": {
+      "description": "OGC API - Features Part 1 access for source feature collections and normalized query results.",
+      "conformsTo": ["http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core"]
+    },
+    "esri-rest": {
+      "description": "ArcGIS MapServer/FeatureServer REST query adapter. This is not an OGC API binding; service version is deployment-dependent and responses are normalized to GeoJSON.",
+      "conformsTo": [],
+      "queryProfile": {
+        "geometryType": "esriGeometryEnvelope",
+        "spatialRel": "esriSpatialRelIntersects",
+        "inSR": 4326,
+        "outSR": 4326,
+        "format": "geojson"
+      }
+    },
+    "openapi": {
+      "description": "Machine-readable OpenAPI 3.0 document (/swagger.json) describing every REST/OGC API operation, enabling generated clients and orchestrators to bind to this kernel without hand-written integration.",
+      "conformsTo": ["https://spec.openapis.org/oas/v3.0.3"]
+    },
+    "openeo": {
+      "description": "ESA/openEO process-graph execution model (openEO API), enabling the same underlying workflow to be invoked as a batch job from any openEO back-end or client (e.g. openEO Platform, Copernicus Data Space Ecosystem).",
+      "conformsTo": ["https://openeo.org/documentation/1.0/developers/api/reference.html"],
+      "platform": "https://openeo.cloud",
+      "facadeEndpoints": ["/openeo/", "/openeo/processes", "/openeo/jobs", "/openeo/jobs/{job_id}", "/openeo/jobs/{job_id}/results"]
+    }
+  },
+  "bindingSelectionNotes": "Each Building Block below declares which interface bindings it supports. A workflow should pick the binding that matches the data/service actually available for a given step (e.g. use openEO when the source is an openEO collection/back-end; use OGC API Features when an endpoint advertises the 1.0 conformance classes; use esri-rest for ArcGIS MapServer/FeatureServer query services; use OGC API Processes/Records for OGC execution/register access; fall back to plain REST + OpenAPI for generic HTTP integration) rather than assuming a single fixed interface end-to-end.",
+  "buildingBlocks": [
+    {
+      "id": "geospatial-processes-facade",
+      "title": "Geospatial Processes Facade",
+      "role": "execution-interface",
+      "spec": "http://www.opengis.net/spec/ogcapi-processes-1/1.0",
+      "standards": [
+        {
+          "id": "ogc-api-processes",
+          "title": "OGC API - Processes",
+          "version": "1.0",
+          "spec": "http://www.opengis.net/spec/ogcapi-processes-1/1.0",
+          "conformanceClasses": [
+            {"id": "core", "uri": "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/core"},
+            {"id": "json", "uri": "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/json"},
+            {"id": "oas30", "uri": "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/oas30"},
+            {"id": "job-list", "uri": "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/job-list"},
+            {"id": "callback", "uri": "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/callback"}
+          ]
+        }
+      ],
+      "interfaceBindings": ["rest", "ogcapi-processes", "openapi", "openeo"],
+      "openeo": {
+        "processId": "ospd_sentinel2_hsi_pilot",
+        "categories": ["cubes", "earth-observation"],
+        "note": "Exposed as an openEO-compatible process/batch job wrapping the same REANA/CWL execution behind /openeo/*."
+      }
+    },
+    {
+      "id": "provenance-profile",
+      "title": "OSPD Provenance Profile",
+      "role": "provenance-contract",
+      "schema": "../../provenance-profile/schema/provenance-profile.schema.json",
+      "context": "../../provenance-profile/context/osdp-prov-context.jsonld",
+      "standards": [
+        {
+          "id": "w3c-prov",
+          "title": "W3C PROV",
+          "spec": "https://www.w3.org/TR/prov-overview/",
+          "conformanceClasses": [{"id": "prov-json", "uri": "https://www.w3.org/TR/prov-json/"}]
+        }
+      ],
+      "interfaceBindings": ["rest", "openapi"],
+      "notes": "Consumed as job/result context over REST/OpenAPI; not natively an openEO concept, but process-type references inside it are cross-walked to openEO process ids via the process-type register mappings."
+    },
+    {
+      "id": "process-type-register",
+      "title": "OSPD Process-Type Register",
+      "role": "controlled-vocabulary",
+      "records": "../../process-type-register/records/process-types-records.json",
+      "mappings": "../../process-type-register/mappings/federation-mappings.json",
+      "standards": [
+        {
+          "id": "ogc-api-records",
+          "title": "OGC API - Records",
+          "version": "1.0",
+          "spec": "http://www.opengis.net/spec/ogcapi-records-1/1.0",
+          "conformanceClasses": [{"id": "core", "uri": "http://www.opengis.net/spec/ogcapi-records-1/1.0/conf/core"}]
+        }
+      ],
+      "interfaceBindings": ["rest", "ogcapi-records", "openapi"],
+      "openeo": {
+        "note": "Process-type entries are cross-referenced to openEO process ids (e.g. atmospheric_correction) via closeMatch/exactMatch mappings in mappings/federation-mappings.json."
+      }
+    },
+    {
+      "id": "geospatial-processes-profile",
+      "title": "Geospatial Processes Provenance Profile",
+      "role": "execution-context-profile",
+      "schema": "../../ogc-api-processes-profile/schema/ogc-process-execution-metadata.schema.json",
+      "example": "../../ogc-api-processes-profile/examples/execution-metadata-example.json",
+      "standards": [
+        {
+          "id": "ogc-api-processes",
+          "title": "OGC API - Processes",
+          "version": "1.0",
+          "spec": "http://www.opengis.net/spec/ogcapi-processes-1/1.0",
+          "conformanceClasses": [{"id": "core", "uri": "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/core"}]
+        }
+      ],
+      "interfaceBindings": ["rest", "ogcapi-processes", "openapi"]
+    },
+    {
+      "id": "source-interoperability-adapter",
+      "title": "Geospatial Source Interoperability Adapter",
+      "role": "data-source-adapter",
+      "standards": [
+        {
+          "id": "ogc-api-features",
+          "title": "OGC API - Features",
+          "version": "1.0",
+          "spec": "http://www.opengis.net/spec/ogcapi-features-1/1.0",
+          "conformanceClasses": [{"id": "core", "uri": "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core"}]
+        },
+        {"id": "esri-rest", "title": "ArcGIS REST", "conformanceClasses": []}
+      ],
+      "interfaceBindings": ["ogcapi-features", "esri-rest", "rest", "openapi"],
+      "normalization": "GeoJSON to MGCP/NGIF with source interoperability context and conformance provenance",
+      "selection": {
+        "preferred": "ogcapi-features",
+        "fallback": "esri-rest",
+        "ogcApiFeaturesBaseline": "1.0",
+        "cql2Baseline": "1.0",
+        "esriQueryProfile": "MapServer/FeatureServer /query; envelope; inSR=4326; outSR=4326; f=geojson"
+      }
+    },
+    {
+      "id": "sentinel2-dji-imagery-harmonization",
+      "title": "Sentinel-2 and DJI Imagery Harmonization",
+      "role": "image-preparation-and-quality-assessment",
+      "example": "../../../docs/sentinel2-dji-harmonization-example.md",
+      "description": "Two-workflow example for geometric correction, Sentinel-2 AI super-resolution, DJI area downsampling, masked histogram matching, and measurable photo-interpretation comparability.",
+      "standards": [
+        {
+          "id": "cloud-optimized-geotiff",
+          "title": "OGC Cloud Optimized GeoTIFF",
+          "spec": "https://docs.ogc.org/is/21-026/21-026.html",
+          "conformanceClasses": []
+        },
+        {
+          "id": "stac",
+          "title": "SpatioTemporal Asset Catalog",
+          "version": "1.0.0",
+          "spec": "https://stacspec.org/en/about/stac-spec/",
+          "conformanceClasses": []
+        }
+      ],
+      "interfaceBindings": ["rest", "ogcapi-processes", "openapi", "openeo"],
+      "workflowContracts": {
+        "sentinel2Reference": {
+          "purpose": "Produce the target grid, AI-enhanced reference image, and masked per-band histogram profile.",
+          "requiredEvidence": ["source checksum", "model checksum and model card", "target grid", "quality report", "provenance"]
+        },
+        "djiComparison": {
+          "purpose": "Orthorectify DJI observations, area-downsample to the reference grid, and match robust per-band distributions.",
+          "requiredEvidence": ["camera and pose inputs", "checkpoint residuals", "before and after histograms", "quality report", "provenance"]
+        }
+      },
+      "acceptance": [
+        "exact target-grid equality",
+        "registration RMSE below the configured threshold",
+        "sufficient valid common overlap",
+        "configured histogram-distance and clipping thresholds pass"
+      ]
+    }
+  ]
+}

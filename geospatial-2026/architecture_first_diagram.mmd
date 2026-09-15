@@ -1,0 +1,52 @@
+flowchart LR
+    subgraph QGIS["QGIS Desktop"]
+        U["User"]
+        PL["Data Quality Check Plugin"]
+        UI["Plugin UI Tabs\nValidation | Raster Management | Provenance"]
+        CORE["Plugin Core Logic\nchecks, raster ops, provenance journal"]
+        PROC["QGIS Processing\nnative + gdal providers"]
+        LOG["Operations Journal\nJSONL"]
+        BUNDLE["Provenance Bundle\nJSON"]
+    end
+
+    subgraph DATA["Project Data"]
+        VEC["Vector Layers"]
+        RAS["Raster Layers"]
+        DER["Derived Rasters\n(hist eq, contrast stretch, etc.)"]
+    end
+
+    subgraph SHARED["Shared Workspace"]
+        ADAPTER["Plugin Adapter\n(shared launcher caller)"]
+        RUNNER["run_workflow.py"]
+        CWL["CWL Workflow\nsentinel2_hsi_pilot"]
+        SCRIPTS["Workflow Steps\ningest | preprocess | classify | package_provenance | verify_provenance"]
+        OUT["Workflow Outputs\nclassification_summary\nstac_item\nprovenance_bundle\nworkflow_prov_profile\nprovenance_verification"]
+    end
+
+    subgraph APIS["OSPD Services"]
+        REG["Process-Type Register API\n(OGC API Records-like)"]
+        OAPIP["OGC API Processes Kernel\n/processes /jobs /kernel"]
+        PROV["Provenance Ingest\n/kernel/provenance"]
+    end
+
+    U --> UI
+    UI --> CORE
+    CORE --> PROC
+    CORE --> VEC
+    CORE --> RAS
+    PROC --> DER
+
+    CORE --> LOG
+    LOG --> BUNDLE
+    UI --> BUNDLE
+
+    CORE --> ADAPTER
+    ADAPTER --> RUNNER
+    RUNNER --> CWL
+    CWL --> SCRIPTS
+    SCRIPTS --> OUT
+
+    OAPIP --> RUNNER
+    OAPIP --> REG
+    BUNDLE --> PROV
+    OUT --> PROV

@@ -1,0 +1,6 @@
+aoi_geojson:
+  class: File
+  path: examples/aoi.geojson
+acquisition_date: "2026-07-10"
+classifier_model: "hsi-baseline-v1"
+run_id: "pilot-001"

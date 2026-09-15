@@ -1,0 +1,15 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "pilot-aoi"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[14.29, 40.79], [14.35, 40.79], [14.35, 40.84], [14.29, 40.84], [14.29, 40.79]]]
+      }
+    }
+  ]
+}

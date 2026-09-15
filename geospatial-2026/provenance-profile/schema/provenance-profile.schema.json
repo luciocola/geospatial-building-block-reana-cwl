@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.org/ospd/2026/provenance-profile.schema.json#",
+  "title": "OSPD 2026 Processing Activity Provenance Profile",
+  "description": "Constrained PROV-JSON profile requiring process-type references for activities.",
+  "type": "object",
+  "required": [
+    "prefix",
+    "entity",
+    "activity",
+    "agent",
+    "wasGeneratedBy",
+    "used",
+    "wasAssociatedWith"
+  ],
+  "properties": {
+    "@context": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "object" }
+      ]
+    },
+    "prefix": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "entity": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "prov:type": { "type": "string" },
+          "prov:label": { "type": "string" },
+          "prov:location": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "activity": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["prov:startTime", "prov:endTime", "processType"],
+        "properties": {
+          "prov:type": { "type": "string" },
+          "prov:label": { "type": "string" },
+          "prov:startTime": { "type": "string", "format": "date-time" },
+          "prov:endTime": { "type": "string", "format": "date-time" },
+          "processType": {
+            "type": "string",
+            "pattern": "^https://example.org/ospd/2026/process-types/[a-z0-9\\-]+$"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "agent": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "prov:type": { "type": "string" },
+          "prov:label": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "wasGeneratedBy": { "type": "object", "minProperties": 1, "additionalProperties": true },
+    "used": { "type": "object", "minProperties": 1, "additionalProperties": true },
+    "wasAssociatedWith": { "type": "object", "minProperties": 1, "additionalProperties": true },
+    "wasDerivedFrom": { "type": "object", "additionalProperties": true },
+    "wasInformedBy": { "type": "object", "additionalProperties": true },
+    "wasAttributedTo": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,23 @@
+{
+  "@context": {
+    "dcat": "http://www.w3.org/ns/dcat#",
+    "dcterms": "http://purl.org/dc/terms/"
+  },
+  "@type": "dcat:Catalog",
+  "dcterms:title": "OSPD 2026 Process-Type Register",
+  "dcterms:description": "Controlled process-type terms for provenance activities.",
+  "dcat:dataset": [
+    {
+      "@id": "https://example.org/ospd/2026/process-types",
+      "@type": "dcat:Dataset",
+      "dcterms:title": "Process type entries",
+      "dcat:distribution": [
+        {
+          "@type": "dcat:Distribution",
+          "dcat:mediaType": "application/geo+json",
+          "dcat:downloadURL": "../records/process-types-records.json"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+orthomosaic:
+  class: File
+  path: dji_orthomosaic_demo.tif
+reference_image:
+  class: File
+  path: ../.demo/sentinel/sentinel2_harmonized.tif
+target_grid:
+  class: File
+  path: ../.demo/sentinel/target_grid.json
+reference_histogram:
+  class: File
+  path: ../.demo/sentinel/reference_histogram.json
+input_scale: 10000.0
+checkpoint_rmse_pixels: 0.25
+cloud_shadow_fraction: 0.0
+min_overlap_pixels: 10000
+max_js_distance: 0.10
+max_clipping_fraction: 0.01
+max_registration_rmse_pixels: 1.0
+max_cloud_shadow_fraction: 0.05
+run_id: demo-001

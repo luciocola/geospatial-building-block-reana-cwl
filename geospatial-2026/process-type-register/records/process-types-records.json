@@ -1,0 +1,83 @@
+{
+  "type": "FeatureCollection",
+  "timeStamp": "2026-07-14T00:00:00Z",
+  "numberMatched": 5,
+  "numberReturned": 5,
+  "features": [
+    {
+      "type": "Feature",
+      "id": "https://example.org/ospd/2026/process-types/data-ingestion",
+      "geometry": null,
+      "properties": {
+        "recordType": "process-type",
+        "prefLabel": "Data ingestion",
+        "definition": "Acquisition and preparation of source datasets for processing workflows.",
+        "status": "valid",
+        "keywords": ["ingestion", "source", "acquisition"]
+      },
+      "links": [
+        { "rel": "self", "href": "https://example.org/ospd/2026/process-types/data-ingestion" }
+      ]
+    },
+    {
+      "type": "Feature",
+      "id": "https://example.org/ospd/2026/process-types/radiometric-preprocessing",
+      "geometry": null,
+      "properties": {
+        "recordType": "process-type",
+        "prefLabel": "Radiometric preprocessing",
+        "definition": "Operations such as normalization and atmospheric correction on imagery/hyperspectral data.",
+        "status": "valid",
+        "keywords": ["preprocessing", "radiometric", "atmospheric-correction"]
+      },
+      "links": [
+        { "rel": "self", "href": "https://example.org/ospd/2026/process-types/radiometric-preprocessing" }
+      ]
+    },
+    {
+      "type": "Feature",
+      "id": "https://example.org/ospd/2026/process-types/geometric-correction",
+      "geometry": null,
+      "properties": {
+        "recordType": "process-type",
+        "prefLabel": "Geometric correction",
+        "definition": "Spatial correction operations including orthorectification and alignment.",
+        "status": "valid",
+        "keywords": ["orthorectification", "alignment", "geometry"]
+      },
+      "links": [
+        { "rel": "self", "href": "https://example.org/ospd/2026/process-types/geometric-correction" }
+      ]
+    },
+    {
+      "type": "Feature",
+      "id": "https://example.org/ospd/2026/process-types/image-classification",
+      "geometry": null,
+      "properties": {
+        "recordType": "process-type",
+        "prefLabel": "Image classification",
+        "definition": "Derivation of thematic classes from imagery/HSI cubes using statistical or ML models.",
+        "status": "valid",
+        "keywords": ["classification", "semantic-segmentation", "ml"]
+      },
+      "links": [
+        { "rel": "self", "href": "https://example.org/ospd/2026/process-types/image-classification" }
+      ]
+    },
+    {
+      "type": "Feature",
+      "id": "https://example.org/ospd/2026/process-types/quality-assessment",
+      "geometry": null,
+      "properties": {
+        "recordType": "process-type",
+        "prefLabel": "Quality assessment",
+        "definition": "Generation of quality or validation metrics for produced outputs.",
+        "status": "valid",
+        "keywords": ["quality", "validation", "assessment"]
+      },
+      "links": [
+        { "rel": "self", "href": "https://example.org/ospd/2026/process-types/quality-assessment" }
+      ]
+    }
+  ]
+}

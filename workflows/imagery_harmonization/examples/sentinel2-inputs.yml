@@ -1,0 +1,8 @@
+source_rgb:
+  class: File
+  path: sentinel2_rgb_demo.tif
+target_crs: EPSG:32632
+target_resolution: 2.5
+input_scale: 10000.0
+method: bicubic-demo
+run_id: demo-001

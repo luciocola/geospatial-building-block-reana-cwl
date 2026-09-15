@@ -1,0 +1,38 @@
+{
+  "process": {
+    "id": "sentinel2_hsi_pilot",
+    "title": "Sentinel-2 to HSI classification",
+    "processType": "https://example.org/ospd/2026/process-types/image-classification"
+  },
+  "inputs": [
+    {
+      "id": "aoi_geojson",
+      "href": "https://example.org/data/aoi.geojson",
+      "inputProvenance": "https://example.org/prov/aoi-source-prov.json"
+    },
+    {
+      "id": "sentinel2_l2a",
+      "href": "https://example.org/data/sentinel2-l2a.zip",
+      "inputProvenance": "https://example.org/prov/sentinel2-acquisition-prov.json"
+    }
+  ],
+  "outputs": [
+    {
+      "id": "classification_geojson",
+      "href": "https://example.org/results/hsi_classification.geojson"
+    },
+    {
+      "id": "provenance_bundle",
+      "href": "https://example.org/results/provenance_bundle.json"
+    }
+  ],
+  "provenance": {
+    "profile": "https://example.org/ospd/2026/provenance-profile.schema.json",
+    "bundle": "https://example.org/results/workflow_prov_profile.json",
+    "registeredProcessTypes": [
+      "https://example.org/ospd/2026/process-types/data-ingestion",
+      "https://example.org/ospd/2026/process-types/radiometric-preprocessing",
+      "https://example.org/ospd/2026/process-types/image-classification"
+    ]
+  }
+}

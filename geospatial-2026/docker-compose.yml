@@ -1,0 +1,20 @@
+services:
+  process-type-register:
+    build:
+      context: ..
+      dockerfile: geospatial-2026/process-type-register/Dockerfile
+    container_name: ospd-process-type-register
+    ports:
+      - "8015:8015"
+
+  oapip-kernel:
+    build:
+      context: ..
+      dockerfile: geospatial-2026/geospatial-processes-kernel/Dockerfile
+    container_name: ospd-oapip-kernel
+    environment:
+      OSPD_REGISTER_API_BASE: http://process-type-register:8015
+    depends_on:
+      - process-type-register
+    ports:
+      - "8016:8016"

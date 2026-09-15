@@ -1,0 +1,69 @@
+{
+  "@context": "../context/osdp-prov-context.jsonld",
+  "prefix": {
+    "prov": "http://www.w3.org/ns/prov#",
+    "process": "https://example.org/ospd/2026/process-types/",
+    "ex": "https://example.org/ospd/2026/example/"
+  },
+  "entity": {
+    "ex:sentinel2_ingest": {
+      "prov:type": "prov:Entity",
+      "prov:label": "Sentinel-2 ingest manifest"
+    },
+    "ex:hsi_cube": {
+      "prov:type": "prov:Entity",
+      "prov:label": "HSI cube manifest"
+    },
+    "ex:classification": {
+      "prov:type": "prov:Entity",
+      "prov:label": "HSI classification"
+    }
+  },
+  "activity": {
+    "ex:ingest": {
+      "prov:type": "prov:Activity",
+      "prov:label": "Sentinel-2 ingestion",
+      "prov:startTime": "2026-07-10T10:00:00Z",
+      "prov:endTime": "2026-07-10T10:05:00Z",
+      "processType": "https://example.org/ospd/2026/process-types/data-ingestion"
+    },
+    "ex:preprocess": {
+      "prov:type": "prov:Activity",
+      "prov:label": "HSI preprocessing",
+      "prov:startTime": "2026-07-10T10:05:00Z",
+      "prov:endTime": "2026-07-10T10:10:00Z",
+      "processType": "https://example.org/ospd/2026/process-types/radiometric-preprocessing"
+    },
+    "ex:classify": {
+      "prov:type": "prov:Activity",
+      "prov:label": "HSI classification",
+      "prov:startTime": "2026-07-10T10:10:00Z",
+      "prov:endTime": "2026-07-10T10:15:00Z",
+      "processType": "https://example.org/ospd/2026/process-types/image-classification"
+    }
+  },
+  "agent": {
+    "ex:reana": {
+      "prov:type": "prov:SoftwareAgent",
+      "prov:label": "REANA"
+    }
+  },
+  "wasGeneratedBy": {
+    "_:wgb1": { "prov:entity": "ex:sentinel2_ingest", "prov:activity": "ex:ingest" },
+    "_:wgb2": { "prov:entity": "ex:hsi_cube", "prov:activity": "ex:preprocess" },
+    "_:wgb3": { "prov:entity": "ex:classification", "prov:activity": "ex:classify" }
+  },
+  "used": {
+    "_:u1": { "prov:activity": "ex:preprocess", "prov:entity": "ex:sentinel2_ingest" },
+    "_:u2": { "prov:activity": "ex:classify", "prov:entity": "ex:hsi_cube" }
+  },
+  "wasAssociatedWith": {
+    "_:waw1": { "prov:activity": "ex:ingest", "prov:agent": "ex:reana" },
+    "_:waw2": { "prov:activity": "ex:preprocess", "prov:agent": "ex:reana" },
+    "_:waw3": { "prov:activity": "ex:classify", "prov:agent": "ex:reana" }
+  },
+  "wasInformedBy": {
+    "_:wib1": { "prov:informed": "ex:preprocess", "prov:informant": "ex:ingest" },
+    "_:wib2": { "prov:informed": "ex:classify", "prov:informant": "ex:preprocess" }
+  }
+}
