@@ -32,6 +32,7 @@ Inputs:
 - `target_resolution_m` (float), for example `2.5`.
 - `super_resolution_model` (File): versioned TorchScript or ONNX model trained for Sentinel-2 reflectance.
 - `model_card` (File): training domain, normalization, scale factor, licence, and validation metrics.
+- `expected_model_sha256` (string): checksum obtained from a trusted model release channel and verified before model loading.
 - `run_id` (string).
 
 Steps:

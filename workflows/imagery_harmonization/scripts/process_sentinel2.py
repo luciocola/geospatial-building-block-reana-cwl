@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -35,6 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--method", choices=("bicubic-demo", "torchscript"), default="bicubic-demo")
     parser.add_argument("--model")
     parser.add_argument("--model-card")
+    parser.add_argument("--expected-model-sha256")
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--output-dir", required=True)
     return parser.parse_args()
@@ -135,6 +137,21 @@ def torchscript_super_resolve(
     return np.clip(result, 0.0, 1.0), resized_mask, output_transform
 
 
+def validate_model_card(path: str, expected_model_sha256: str) -> dict:
+    with open(path, "r", encoding="utf-8") as stream:
+        model_card = json.load(stream)
+    required = ("name", "version", "format", "publisher", "license", "input", "output")
+    missing = [key for key in required if not model_card.get(key)]
+    if missing:
+        raise ValueError("model card is missing required fields: " + ", ".join(missing))
+    if model_card["format"] != "TorchScript":
+        raise ValueError("model card format must be TorchScript")
+    declared_sha256 = model_card.get("model_sha256")
+    if declared_sha256 and declared_sha256 != expected_model_sha256:
+        raise ValueError("model card checksum does not match expected-model-sha256")
+    return model_card
+
+
 def main() -> int:
     args = parse_args()
     output_dir = Path(args.output_dir)
@@ -142,16 +159,23 @@ def main() -> int:
     data, mask, source = read_source(args.source_rgb, args.input_scale)
 
     model_sha = None
+    model_card_sha = None
     if args.method == "torchscript":
-        if not args.model or not args.model_card:
-            raise ValueError("torchscript method requires --model and --model-card")
+        if not args.model or not args.model_card or not args.expected_model_sha256:
+            raise ValueError(
+                "torchscript method requires --model, --model-card, and --expected-model-sha256"
+            )
+        model_sha = sha256(args.model)
+        if model_sha != args.expected_model_sha256.lower():
+            raise ValueError("model checksum does not match expected-model-sha256")
+        validate_model_card(args.model_card, model_sha)
+        model_card_sha = sha256(args.model_card)
         base_data, base_mask, base_transform = reproject_array(
             data, mask, source, args.target_crs, None, Resampling.bilinear
         )
         result, result_mask, transform = torchscript_super_resolve(
             base_data, base_mask, args.model, args.target_resolution, base_transform
         )
-        model_sha = sha256(args.model)
     else:
         result, result_mask, transform = reproject_array(
             data, mask, source, args.target_crs, args.target_resolution, Resampling.cubic_spline
@@ -222,6 +246,7 @@ def main() -> int:
                 "model": args.model,
                 "model_sha256": model_sha,
                 "model_card": args.model_card,
+                "model_card_sha256": model_card_sha,
             },
             "outputs": {
                 path.name: sha256(path)

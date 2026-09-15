@@ -2,6 +2,8 @@
 
 This workspace centralizes reusable REANA/CWL workflows for multiple plugins.
 
+> **Pilot status:** This is not a hardened multi-tenant service. Read [SECURITY.md](SECURITY.md) before deployment. Source and documentation are licensed under [Apache License 2.0](LICENSE); see [NOTICE](NOTICE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## Goals
 
 - Keep workflow definitions independent from any single plugin.

@@ -2,6 +2,9 @@
   "name": "replace-with-validated-sentinel2-super-resolution-model",
   "version": "0.0.0",
   "format": "TorchScript",
+  "publisher": "replace-with-model-publisher",
+  "license": "replace-with-SPDX-license-expression-or-proprietary-terms-reference",
+  "model_sha256": "replace-with-64-character-model-sha256",
   "input": {
     "shape": [1, 3, null, null],
     "band_order": ["red", "green", "blue"],

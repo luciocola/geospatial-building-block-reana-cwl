@@ -1,8 +1,9 @@
-FROM python:3.11-slim
+FROM python:3.11.13-slim-bookworm
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir fastapi uvicorn
+COPY geospatial-2026/process-type-register/requirements.lock.txt /tmp/requirements.lock.txt
+RUN pip install --no-cache-dir --requirement /tmp/requirements.lock.txt
 
 COPY . /app
 

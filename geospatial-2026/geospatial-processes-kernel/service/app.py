@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import secrets
 import subprocess
 import shutil
 import threading
@@ -13,10 +14,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import Body, FastAPI, HTTPException, Response
+from fastapi import Body, FastAPI, HTTPException, Request, Response
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -29,21 +30,34 @@ DEFAULT_AOI = WORKFLOW_DIR / "examples" / "aoi.geojson"
 JOB_ROOT = WORKFLOW_DIR / ".tmp_oapip_jobs"
 REGISTER_API_BASE = os.getenv("OSPD_REGISTER_API_BASE", "http://127.0.0.1:8015")
 PROVENANCE_ROOT = BASE_DIR / "kernel" / "provenance_ingest"
+API_TOKEN = os.getenv("OSPD_API_TOKEN", "")
+MAX_PROVENANCE_BYTES = int(os.getenv("OSPD_MAX_PROVENANCE_BYTES", "1048576"))
+MAX_JOB_LOG_CHARS = int(os.getenv("OSPD_MAX_JOB_LOG_CHARS", "65536"))
+MAX_EXECUTION_BYTES = int(os.getenv("OSPD_MAX_EXECUTION_BYTES", "262144"))
+MAX_PROVENANCE_RECORDS = int(os.getenv("OSPD_MAX_PROVENANCE_RECORDS", "1000"))
+RESULT_MEDIA_TYPES = {
+    "hsi_classification.geojson": "application/geo+json",
+    "classification_summary.json": "application/json",
+    "stac_item.json": "application/geo+json",
+    "provenance_bundle.json": "application/json",
+    "workflow_prov_profile.json": "application/json",
+    "provenance_verification.json": "application/json",
+}
 
 
 class ProcessExecutionRequest(BaseModel):
     backend: str = Field(default="cwltool", pattern="^(cwltool|reana)$")
     inputs: dict[str, Any] = Field(default_factory=dict)
-    layer_name: str | None = None
-    image_path: str | None = None
-    run_id: str | None = None
-    reana_name_prefix: str | None = None
+    layer_name: str | None = Field(default=None, max_length=256)
+    image_path: str | None = Field(default=None, max_length=2048)
+    run_id: str | None = Field(default=None, max_length=128)
+    reana_name_prefix: str | None = Field(default=None, max_length=128)
 
 
 class ProvenanceIngestRequest(BaseModel):
     bundle: dict[str, Any] | None = None
-    source: str | None = None
-    tags: list[str] = Field(default_factory=list)
+    source: str | None = Field(default=None, max_length=2048)
+    tags: list[str] = Field(default_factory=list, max_length=50)
 
 
 # --- openEO interoperability binding -----------------------------------------------------
@@ -76,12 +90,28 @@ def _extract_bundle(payload: dict[str, Any]) -> dict[str, Any]:
     return payload
 
 
+def _resolve_workspace_file(value: Any) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise HTTPException(status_code=422, detail="File href/path must be a non-empty string")
+    candidate = Path(value)
+    if not candidate.is_absolute():
+        candidate = WORKSPACE_ROOT / candidate
+    resolved = candidate.resolve()
+    try:
+        resolved.relative_to(WORKSPACE_ROOT.resolve())
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="File inputs must remain inside the workspace") from exc
+    if not resolved.is_file():
+        raise HTTPException(status_code=422, detail="Input file does not exist inside the workspace")
+    return str(resolved)
+
+
 def _normalize_input_value(value: Any) -> Any:
     if isinstance(value, dict):
         if "href" in value:
-            return {"class": "File", "path": value["href"]}
+            return {"class": "File", "path": _resolve_workspace_file(value["href"])}
         if "path" in value and value.get("class") == "File":
-            return value
+            return {**value, "path": _resolve_workspace_file(value["path"])}
         if "value" in value:
             return value["value"]
     return value
@@ -153,20 +183,15 @@ class JobStore:
 JOB_STORE = JobStore()
 
 
-def _collect_local_results(job_dir: Path) -> dict[str, Any]:
+def _collect_local_results(job_id: str, job_dir: Path) -> dict[str, Any]:
     outputs = {}
     output_dir = job_dir / "outputs"
-    for name in [
-        "hsi_classification.geojson",
-        "classification_summary.json",
-        "stac_item.json",
-        "provenance_bundle.json",
-        "workflow_prov_profile.json",
-        "provenance_verification.json",
-    ]:
-        p = output_dir / name
-        if p.exists():
-            outputs[name] = str(p)
+    for name, media_type in RESULT_MEDIA_TYPES.items():
+        if (output_dir / name).is_file():
+            outputs[name] = {
+                "href": f"/jobs/{job_id}/artifacts/{name}",
+                "type": media_type,
+            }
     return outputs
 
 
@@ -309,13 +334,17 @@ def _run_job(job: dict[str, Any]) -> None:
         proc = subprocess.run(cmd, cwd=str(WORKFLOW_DIR), capture_output=True, text=True, check=False)
 
     status = "successful" if proc.returncode == 0 else "failed"
-    results = _collect_local_results(job_dir) if status == "successful" and backend == "cwltool" else {}
+    results = (
+        _collect_local_results(job_id, job_dir)
+        if status == "successful" and backend == "cwltool"
+        else {}
+    )
     JOB_STORE.update(
         job_id,
         status=status,
         returnCode=proc.returncode,
-        stdout=proc.stdout,
-        stderr=proc.stderr,
+        stdout=proc.stdout[-MAX_JOB_LOG_CHARS:],
+        stderr=proc.stderr[-MAX_JOB_LOG_CHARS:],
         results=results,
     )
 
@@ -366,6 +395,48 @@ app = FastAPI(
 )
 
 
+def _is_protected_route(request: Request) -> bool:
+    path = request.url.path.rstrip("/")
+    return (
+        path.startswith("/jobs")
+        or path.startswith("/kernel/provenance")
+        or path.startswith("/openeo/jobs")
+        or path.endswith("/execution")
+    )
+
+
+@app.middleware("http")
+async def protect_operational_routes(request: Request, call_next):
+    if not _is_protected_route(request):
+        return await call_next(request)
+    content_length = request.headers.get("Content-Length")
+    maximum_length = (
+        MAX_PROVENANCE_BYTES
+        if request.url.path.rstrip("/") == "/kernel/provenance"
+        else MAX_EXECUTION_BYTES
+    )
+    if content_length:
+        try:
+            if int(content_length) > maximum_length:
+                return JSONResponse(status_code=413, content={"detail": "Request body too large"})
+        except ValueError:
+            return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length header"})
+    if not API_TOKEN:
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Operational API disabled: configure OSPD_API_TOKEN"},
+        )
+    authorization = request.headers.get("Authorization", "")
+    scheme, _, supplied_token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not secrets.compare_digest(supplied_token, API_TOKEN):
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Valid bearer token required"},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return await call_next(request)
+
+
 def build_openapi() -> dict[str, Any]:
     if app.openapi_schema:
         return app.openapi_schema
@@ -398,6 +469,20 @@ def build_openapi() -> dict[str, Any]:
             for standard in block.get("standards", [])
         ],
     }
+    schema.setdefault("components", {}).setdefault("securitySchemes", {})["BearerAuth"] = {
+        "type": "http",
+        "scheme": "bearer",
+    }
+    for path, operations in schema.get("paths", {}).items():
+        if (
+            path.startswith("/jobs")
+            or path.startswith("/kernel/provenance")
+            or path.startswith("/openeo/jobs")
+            or path.endswith("/execution")
+        ):
+            for operation in operations.values():
+                if isinstance(operation, dict):
+                    operation["security"] = [{"BearerAuth": []}]
     app.openapi_schema = schema
     return schema
 
@@ -534,6 +619,8 @@ def execute_process(
     if not WORKFLOW_FILE.exists():
         raise HTTPException(status_code=500, detail=f"Workflow file missing: {WORKFLOW_FILE}")
 
+    _build_workflow_inputs(payload, run_id=request.run_id or "validation")
+
     job = JOB_STORE.create(process_id=process_id, backend=backend, payload=payload)
     thread = threading.Thread(target=_run_job, args=(job,), daemon=True)
     thread.start()
@@ -587,9 +674,24 @@ def get_job_results(job_id: str) -> dict[str, Any]:
         "status": job["status"],
         "returnCode": job["returnCode"],
         "results": job.get("results", {}),
-        "stdout": job.get("stdout", ""),
-        "stderr": job.get("stderr", ""),
+        "logsAvailable": bool(job.get("stdout") or job.get("stderr")),
     }
+
+
+@app.get("/jobs/{job_id}/artifacts/{filename}", tags=["jobs"])
+def get_job_artifact(job_id: str, filename: str) -> FileResponse:
+    try:
+        job = JOB_STORE.get(job_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}") from exc
+    if job["status"] != "successful":
+        raise HTTPException(status_code=409, detail="Artifacts are available only for successful jobs")
+    if filename not in RESULT_MEDIA_TYPES:
+        raise HTTPException(status_code=404, detail="Artifact not found")
+    path = JOB_ROOT / job_id / "outputs" / filename
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Artifact not found")
+    return FileResponse(path, media_type=RESULT_MEDIA_TYPES[filename], filename=filename)
 
 
 @app.get("/kernel", tags=["kernel"])
@@ -646,6 +748,11 @@ def ingest_provenance(payload: ProvenanceIngestRequest | dict[str, Any] = Body(.
     bundle = _extract_bundle(payload_data)
     if not isinstance(bundle, dict):
         raise HTTPException(status_code=400, detail="Provenance bundle must be a JSON object")
+    if not any(key in bundle for key in ("entity", "activity", "agent")):
+        raise HTTPException(status_code=422, detail="Provenance bundle must contain entity, activity, or agent")
+    encoded_payload = json.dumps(payload_data, separators=(",", ":")).encode("utf-8")
+    if len(encoded_payload) > MAX_PROVENANCE_BYTES:
+        raise HTTPException(status_code=413, detail="Provenance payload exceeds configured size limit")
 
     ingest_id = str(uuid.uuid4())
     received_at = now_iso()
@@ -661,12 +768,19 @@ def ingest_provenance(payload: ProvenanceIngestRequest | dict[str, Any] = Body(.
     }
     with out_file.open("w", encoding="utf-8") as f:
         json.dump(envelope, f, indent=2)
+    out_file.chmod(0o600)
+    retained = sorted(
+        (path for path in PROVENANCE_ROOT.glob("*.json") if path.is_file()),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    for expired in retained[MAX_PROVENANCE_RECORDS:]:
+        expired.unlink()
 
     return {
         "status": "accepted",
         "ingestID": ingest_id,
         "receivedAt": received_at,
-        "storedAt": str(out_file),
         "links": [
             {"rel": "self", "type": "application/json", "href": f"/kernel/provenance/{ingest_id}"},
             {"rel": "collection", "type": "application/json", "href": "/kernel/provenance"},
@@ -715,7 +829,11 @@ def list_provenance(limit: int = 20) -> dict[str, Any]:
 
 @app.get("/kernel/provenance/{ingest_id}", tags=["kernel"])
 def get_provenance(ingest_id: str) -> dict[str, Any]:
-    path = PROVENANCE_ROOT / f"{ingest_id}.json"
+    try:
+        normalized_id = str(uuid.UUID(ingest_id))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Invalid provenance ingest identifier") from exc
+    path = PROVENANCE_ROOT / f"{normalized_id}.json"
     if not path.exists():
         raise HTTPException(status_code=404, detail=f"Provenance ingest not found: {ingest_id}")
     return load_json(path)

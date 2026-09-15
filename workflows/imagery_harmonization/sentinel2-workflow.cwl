@@ -14,6 +14,7 @@ inputs:
     default: bicubic-demo
   model: File?
   model_card: File?
+  expected_model_sha256: string?
   run_id: string
 steps:
   prepare_reference:
@@ -26,6 +27,7 @@ steps:
       method: method
       model: model
       model_card: model_card
+      expected_model_sha256: expected_model_sha256
       run_id: run_id
     out:
       - sentinel2_harmonized

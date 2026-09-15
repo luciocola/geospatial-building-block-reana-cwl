@@ -70,9 +70,10 @@ model:
 model_card:
   class: File
   path: /absolute/path/model-card.json
+expected_model_sha256: replace-with-trusted-64-character-sha256
 ```
 
-The model must accept a normalized tensor shaped `[1, 3, height, width]`, return `[1, 3, scaled_height, scaled_width]`, and produce the requested target resolution within 2%. Start from `examples/model-card-template.json`.
+The expected checksum must come from a trusted release channel, not from the uploaded model itself. The checksum is verified before `torch.jit.load` runs. The model card must identify its publisher and licence, accept a normalized tensor shaped `[1, 3, height, width]`, return `[1, 3, scaled_height, scaled_width]`, and produce the requested target resolution within 2%. Start from `examples/model-card-template.json`.
 
 ## REANA
 

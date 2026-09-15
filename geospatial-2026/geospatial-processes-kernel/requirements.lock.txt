@@ -1,0 +1,4 @@
+fastapi==0.116.1
+pydantic==2.11.10
+uvicorn==0.35.0
+cwltool==3.2.20260413085819

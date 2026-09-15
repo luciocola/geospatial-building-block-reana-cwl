@@ -49,6 +49,10 @@ inputs:
     type: File?
     inputBinding:
       prefix: --model-card
+  expected_model_sha256:
+    type: string?
+    inputBinding:
+      prefix: --expected-model-sha256
   run_id:
     type: string
     inputBinding:

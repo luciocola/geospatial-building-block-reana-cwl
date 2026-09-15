@@ -40,10 +40,13 @@ flattening their conformance requirements into one list.
 From `reana_cwl_workflows` root:
 
 ```bash
+export OSPD_API_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
 python3 -m uvicorn app:app \
   --app-dir geospatial-2026/geospatial-processes-kernel/service \
   --host 127.0.0.1 --port 8016
 ```
+
+Discovery and conformance endpoints are public. Execution, jobs, openEO jobs, and provenance endpoints require `Authorization: Bearer $OSPD_API_TOKEN`. Operational routes return `503` when the token is not configured. File inputs must resolve to existing files inside this workspace.
 
 ## Key endpoints
 
@@ -65,6 +68,7 @@ python3 -m uvicorn app:app \
 
 ```bash
 curl -sS -X POST http://127.0.0.1:8016/processes/sentinel2-hsi-pilot/execution \
+  -H "Authorization: Bearer $OSPD_API_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{
     "backend": "cwltool",
@@ -81,11 +85,15 @@ curl -sS -X POST http://127.0.0.1:8016/processes/sentinel2-hsi-pilot/execution \
 Then poll:
 
 ```bash
-curl -sS http://127.0.0.1:8016/jobs/<job_id> | jq
-curl -sS http://127.0.0.1:8016/jobs/<job_id>/results | jq
+curl -sS -H "Authorization: Bearer $OSPD_API_TOKEN" \
+  http://127.0.0.1:8016/jobs/<job_id> | jq
+curl -sS -H "Authorization: Bearer $OSPD_API_TOKEN" \
+  http://127.0.0.1:8016/jobs/<job_id>/results | jq
 ```
 
 ## Notes
 
 - `backend=cwltool` executes locally and returns output file paths.
 - `backend=reana` submits through `scripts/run_workflow.py` with `--backend reana`; results are not pulled back automatically by this facade.
+- Raw process stdout/stderr are retained only as bounded internal diagnostics and are not returned by the results API.
+- For non-loopback deployment, place the service behind a TLS-terminating gateway with user-level authentication, authorization, quotas, and audit logging. See `SECURITY.md`.

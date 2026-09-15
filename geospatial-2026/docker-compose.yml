@@ -5,7 +5,7 @@ services:
       dockerfile: geospatial-2026/process-type-register/Dockerfile
     container_name: ospd-process-type-register
     ports:
-      - "8015:8015"
+      - "127.0.0.1:8015:8015"
 
   oapip-kernel:
     build:
@@ -14,7 +14,8 @@ services:
     container_name: ospd-oapip-kernel
     environment:
       OSPD_REGISTER_API_BASE: http://process-type-register:8015
+      OSPD_API_TOKEN: ${OSPD_API_TOKEN:?Set OSPD_API_TOKEN before starting the kernel}
     depends_on:
       - process-type-register
     ports:
-      - "8016:8016"
+      - "127.0.0.1:8016:8016"
