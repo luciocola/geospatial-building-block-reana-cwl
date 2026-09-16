@@ -4,6 +4,23 @@ This workspace centralizes reusable REANA/CWL workflows for multiple plugins.
 
 > **Pilot status:** This is not a hardened multi-tenant service. Read [SECURITY.md](SECURITY.md) before deployment. Source and documentation are licensed under [Apache License 2.0](LICENSE); see [NOTICE](NOTICE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
+## Implemented Geospatial Building Block
+
+This repository implements a REANA/CWL-based **Geospatial Building Block** for reusable, provenance-ready geospatial processing. It combines executable CWL workflows, process contracts, interface bindings, quality validation, STAC outputs, and W3C PROV evidence so QGIS plugins and other clients can use the same processing capability.
+
+The Building Block evolves the role of metadata for dynamic environments. Metadata remains context-dependent and is not forced into one universal fixed schema. Instead, each execution dynamically creates a machine-readable contract that logically represents the selected data, process, parameters, outputs, and context-specific metadata. The kernel harmonizes that evolving contract through stable minimum semantics, typed outputs, validation behavior, and evidence requirements.
+
+In short:
+
+```text
+context-dependent metadata
+	-> dynamically created data/process contract
+	-> harmonized kernel semantics and evidence
+	-> executable REANA/CWL result
+```
+
+The implemented Sentinel-2/DJI example demonstrates this model with common-grid reprojection, optional AI super-resolution, DJI downsampling, histogram harmonization, comparability gates, STAC Items, and provenance artifacts. See [the imagery harmonization workflow](workflows/imagery_harmonization/README.md) and [the contract architecture](docs/sentinel2-dji-harmonization-example.md).
+
 ## Goals
 
 - Keep workflow definitions independent from any single plugin.
