@@ -55,3 +55,15 @@ python3 scripts/run_workflow.py \
 ## Geospatial Imagery Harmonization Example
 
 See [Sentinel-2 and DJI Harmonization Example](sentinel2-dji-harmonization-example.md) for a two-workflow design covering orthorectification, Sentinel-2 AI super-resolution, DJI downsampling, robust histogram matching, common-grid validation, and provenance.
+
+## QGIS EDI Integration Boundary
+
+The QGIS EDI source tree is a QGIS fork and currently has no distinct EDI workflow/provider implementation. The recommended adapter is documented in [integrations/qgis_edi](../integrations/qgis_edi/README.md). It creates a context-specific logical contract from a QGIS layer and selected Processing parameters, then selects among:
+
+- local `cwltool` for offline execution;
+- the protected Geospatial Building Block kernel on port `8016`;
+- the Process-Type Register on port `8015`;
+- the UMM STAC API on port `18000` for health/catalog integration only;
+- REANA and ODM/NodeODM for operational remote execution and raw DJI photogrammetry.
+
+The current Docker inspection found no running containers because Docker Desktop was unavailable. The adapter therefore performs service preflight and supports offline fallback instead of assuming these endpoints are live.

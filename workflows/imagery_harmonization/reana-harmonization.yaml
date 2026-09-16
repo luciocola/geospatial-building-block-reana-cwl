@@ -1,0 +1,29 @@
+version: 0.9.0
+inputs:
+  files:
+    - harmonization-workflow.cwl
+    - steps/process-sentinel2.cwl
+    - steps/process-dji.cwl
+    - steps/assess-comparability.cwl
+    - scripts/process_sentinel2.py
+    - scripts/process_dji.py
+    - scripts/assess_comparability.py
+    - scripts/raster_contracts.py
+    - examples/harmonization-inputs.yml
+workflow:
+  type: cwl
+  file: harmonization-workflow.cwl
+outputs:
+  files:
+    - sentinel2_harmonized.tif
+    - reference_histogram.json
+    - target_grid.json
+    - sentinel2_quality.json
+    - sentinel2_stac_item.json
+    - sentinel2_provenance.json
+    - dji_harmonized.tif
+    - dji_histograms.json
+    - dji_quality.json
+    - dji_stac_item.json
+    - dji_provenance.json
+    - comparability_report.json

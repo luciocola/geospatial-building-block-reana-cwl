@@ -241,6 +241,19 @@
         "sufficient valid common overlap",
         "configured histogram-distance and clipping thresholds pass"
       ]
+    },
+    {
+      "id": "qgis-edi-plugin-portfolio",
+      "title": "QGIS EDI Building Block Portfolio",
+      "role": "plugin-portfolio",
+      "catalog": "../../../integrations/qgis_edi/building-block-catalog.json",
+      "description": "Catalog of workspace-developed QGIS plugins and supporting geospatial services exposed through context-specific logical contracts.",
+      "interfaceBindings": ["qgisProcessing", "rest", "ogcapi-processes", "openapi", "stac"],
+      "contract": {
+        "discovery": "building-block-contract",
+        "minimumSemantics": ["input identity", "spatial/temporal scope", "process identity", "typed outputs", "execution evidence"],
+        "rule": "Context-dependent metadata is retained inside a dynamically created contract and harmonized through kernel semantics and evidence rules."
+      }
     }
   ]
 }

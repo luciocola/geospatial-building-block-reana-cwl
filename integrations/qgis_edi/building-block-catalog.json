@@ -1,0 +1,282 @@
+{
+  "id": "qgis-edi-plugin-portfolio",
+  "title": "QGIS EDI Building Block Portfolio",
+  "version": "0.1.0",
+  "description": "Catalog of workspace-developed QGIS plugins and supporting geospatial services that can participate in the QGIS EDI contract-driven workflow.",
+  "contractModel": {
+    "discovery": "building-block-contract",
+    "principle": "Metadata remains context-dependent; each block declares the logical data and process contract relevant to its execution context.",
+    "minimumSemantics": ["input identity", "spatial/temporal scope", "process identity", "typed outputs", "execution evidence"],
+    "requiredEvidence": ["execution identifier", "input references", "output references", "validation result"]
+  },
+  "serviceBindings": {
+    "qgisProcessing": "QgsProcessingProvider/QgsProcessingAlgorithm",
+    "kernel": "http://127.0.0.1:8016",
+    "processRegister": "http://127.0.0.1:8015",
+    "ummStac": "http://127.0.0.1:18000",
+    "reana": "optional remote execution",
+    "odm": "optional DJI photogrammetry service"
+  },
+  "buildingBlocks": [
+    {
+      "id": "qgis-cop-defence",
+      "title": "COP Defence",
+      "type": "qgis-plugin",
+      "sourceProject": "cop_defence",
+      "entryPoint": "__init__.py",
+      "capability": "Common operating picture defence tooling",
+      "contract": "geospatial/STAC data -> COP outputs and services",
+      "interfaces": ["qgisProcessing", "kernel", "stac"]
+    },
+    {
+      "id": "qgis-stac-cop-reporter",
+      "title": "STAC COP Reporter",
+      "type": "qgis-plugin",
+      "sourceProject": "stac_cop_reporter_plugin",
+      "entryPoint": "__init__.py / metadata.txt",
+      "capability": "Report COP/STAC content",
+      "contract": "STAC items and COP context -> reports",
+      "interfaces": ["qgisProcessing", "stac"]
+    },
+    {
+      "id": "qgis-umm-stac-converter",
+      "title": "UMM-STAC Converter",
+      "type": "qgis-plugin",
+      "sourceProject": "umm_stac_converter_plugin",
+      "entryPoint": "__init__.py",
+      "capability": "Convert UMM and STAC metadata",
+      "contract": "UMM/STAC documents <-> normalized metadata",
+      "interfaces": ["qgisProcessing", "ummStac", "stac"]
+    },
+    {
+      "id": "qgis-cop-stac-exporter",
+      "title": "COP STAC Exporter",
+      "type": "qgis-plugin",
+      "sourceProject": "cop_stac_exporter",
+      "entryPoint": "__init__.py / exporter module",
+      "capability": "Export COP layers as STAC",
+      "contract": "QGIS vector/raster layers -> STAC catalog, items, and assets",
+      "interfaces": ["qgisProcessing", "stac"]
+    },
+    {
+      "id": "qgis-situational-awareness",
+      "title": "Situational Awareness",
+      "type": "qgis-plugin",
+      "sourceProject": "situational_awareness",
+      "entryPoint": "__init__.py",
+      "capability": "Situational-awareness visualization and processing",
+      "contract": "geospatial/event inputs -> awareness layers and services",
+      "interfaces": ["qgisProcessing", "kernel"]
+    },
+    {
+      "id": "qgis-share-common-operating-picture",
+      "title": "Share Common Operating Picture",
+      "type": "qgis-plugin",
+      "sourceProject": "share_common_operating_picture",
+      "entryPoint": "__init__.py",
+      "capability": "Publish and share COP data",
+      "contract": "COP layers -> shared service or exported artifacts",
+      "interfaces": ["qgisProcessing", "stac", "kernel"]
+    },
+    {
+      "id": "qgis-osm-mgcp-converter",
+      "title": "OSM-MGCP Converter",
+      "type": "qgis-plugin",
+      "sourceProject": "osm_mgcp_converter",
+      "entryPoint": "__init__.py / converter module",
+      "capability": "Translate OpenStreetMap and MGCP data",
+      "contract": "OSM/MGCP files -> converted vector data",
+      "interfaces": ["qgisProcessing", "kernel"]
+    },
+    {
+      "id": "qgis-ipfs-imagery-uploader",
+      "title": "IPFS Imagery Uploader",
+      "type": "qgis-plugin",
+      "sourceProject": "ipfs_imagery_uploader",
+      "entryPoint": "__init__.py / uploader module",
+      "capability": "Upload imagery to IPFS",
+      "contract": "raster/image assets -> IPFS CID and URI",
+      "interfaces": ["qgisProcessing", "ipfs", "stac"]
+    },
+    {
+      "id": "qgis-satellite-stac-importer",
+      "title": "Satellite STAC Importer",
+      "type": "qgis-plugin",
+      "sourceProject": "satellite_stac_importer",
+      "entryPoint": "__init__.py / importer module",
+      "capability": "Ingest satellite imagery through STAC",
+      "contract": "STAC/API assets -> local or managed QGIS imagery layers",
+      "interfaces": ["qgisProcessing", "stac", "ummStac"]
+    },
+    {
+      "id": "qgis-heif-ttl-importer",
+      "title": "HEIF TTL Importer",
+      "type": "qgis-plugin",
+      "sourceProject": "heif_ttl_importer",
+      "entryPoint": "__init__.py / heif_ttl_importer.py",
+      "capability": "Import HEIF imagery and TTL metadata",
+      "contract": "HEIF/TTL files -> georeferenced imagery and metadata",
+      "interfaces": ["qgisProcessing", "stac"]
+    },
+    {
+      "id": "qgis-medical-hsi-manager",
+      "title": "Medical HSI Manager",
+      "type": "qgis-plugin",
+      "sourceProject": "medical_hsi_manager",
+      "entryPoint": "__init__.py",
+      "capability": "Manage medical hyperspectral imagery",
+      "contract": "HSI datasets -> managed and visualized analysis layers",
+      "interfaces": ["qgisProcessing", "kernel"]
+    },
+    {
+      "id": "qgis-archaeological-hsi-manager",
+      "title": "Archaeological HSI Manager",
+      "type": "qgis-plugin",
+      "sourceProject": "archaeological_hsi_manager",
+      "entryPoint": "__init__.py",
+      "capability": "Manage archaeological hyperspectral imagery",
+      "contract": "HSI datasets -> managed archaeological analysis layers",
+      "interfaces": ["qgisProcessing", "kernel"]
+    },
+    {
+      "id": "qgis-asbestos-hsi-manager",
+      "title": "Asbestos HSI Manager",
+      "type": "qgis-plugin",
+      "sourceProject": "asbestos_hsi_manager",
+      "entryPoint": "__init__.py",
+      "capability": "Manage asbestos-detection hyperspectral imagery",
+      "contract": "HSI datasets -> classified and managed results",
+      "interfaces": ["qgisProcessing", "kernel"]
+    },
+    {
+      "id": "qgis-grc-tools",
+      "title": "GRC Tools",
+      "type": "qgis-plugin",
+      "sourceProject": "grc_tools_plugin",
+      "entryPoint": "__init__.py",
+      "capability": "Geospatial risk and compliance tooling",
+      "contract": "GIS inputs -> analysis layers and reports",
+      "interfaces": ["qgisProcessing", "kernel"]
+    },
+    {
+      "id": "qgis-dji-drone-processor",
+      "title": "DJI Drone Processor",
+      "type": "qgis-plugin",
+      "sourceProject": "dji_drone_processor",
+      "entryPoint": "__init__.py / processor.py",
+      "capability": "Process DJI imagery and flight metadata",
+      "contract": "DJI imagery and telemetry -> corrected imagery, DSM, point cloud, and mesh",
+      "interfaces": ["qgisProcessing", "odm", "stac", "kernel"]
+    },
+    {
+      "id": "qgis-hsi-pushbroom-mosaicker",
+      "title": "HSI Pushbroom Mosaicker",
+      "type": "qgis-plugin",
+      "sourceProject": "hsi_pushbroom_mosaicker",
+      "entryPoint": "__init__.py",
+      "capability": "Mosaic pushbroom hyperspectral captures",
+      "contract": "pushbroom strips -> georeferenced hyperspectral mosaic",
+      "interfaces": ["qgisProcessing", "kernel"]
+    },
+    {
+      "id": "qgis-general-raster-importer",
+      "title": "General Raster Importer",
+      "type": "qgis-plugin",
+      "sourceProject": "QGIS-general-raster-importer",
+      "entryPoint": "__init__.py / heif_ttl_importer.py",
+      "capability": "Import and georeference general raster formats",
+      "contract": "raster and optional GCP/TTL metadata -> QGIS raster layer",
+      "interfaces": ["qgisProcessing", "stac"]
+    },
+    {
+      "id": "qgis-fabric-uploader",
+      "title": "Fabric Uploader",
+      "type": "qgis-plugin",
+      "sourceProject": "fabric_uploader",
+      "entryPoint": "__init__.py",
+      "capability": "Upload data to Fabric storage",
+      "contract": "local assets -> Fabric-managed objects and URLs",
+      "interfaces": ["qgisProcessing", "stac"]
+    },
+    {
+      "id": "qgis-ngim-ngi-converter",
+      "title": "NGIM-NGI Converter",
+      "type": "qgis-plugin",
+      "sourceProject": "ngim_ngi_converter",
+      "entryPoint": "__init__.py / converter module",
+      "capability": "Convert NGIM/NGI products",
+      "contract": "NGIM/NGI inputs -> normalized geospatial products",
+      "interfaces": ["qgisProcessing", "kernel", "stac"]
+    },
+    {
+      "id": "qgis-vector-data-quality",
+      "title": "Vector Data Quality Check",
+      "type": "qgis-plugin",
+      "sourceProject": "data_quality_check_vectors",
+      "entryPoint": "__init__.py / data_quality_check_vectors.py",
+      "capability": "Validate vector data quality",
+      "contract": "vector layers -> validation findings and report",
+      "interfaces": ["qgisProcessing", "kernel", "reana"]
+    },
+    {
+      "id": "qgis-trash-hsi-manager",
+      "title": "Trash HSI Manager",
+      "type": "qgis-plugin",
+      "sourceProject": "trash_hsi_manager",
+      "entryPoint": "__init__.py",
+      "capability": "Manage waste and trash hyperspectral imagery",
+      "contract": "HSI data -> managed and classified outputs",
+      "interfaces": ["qgisProcessing", "kernel"]
+    },
+    {
+      "id": "stac-imagery-api",
+      "title": "STAC Imagery API",
+      "type": "supporting-service",
+      "sourceProject": "stac_imagery_api",
+      "entryPoint": "app.py",
+      "capability": "Serve and package satellite imagery using STAC",
+      "contract": "HTTP imagery requests -> STAC items, packages, and optional anchors",
+      "interfaces": ["rest", "stac", "kernel"]
+    },
+    {
+      "id": "umm-stac-api",
+      "title": "UMM-STAC API",
+      "type": "supporting-service",
+      "sourceProject": "umm_stac_api",
+      "entryPoint": "app.py",
+      "capability": "Expose UMM/STAC metadata services",
+      "contract": "HTTP metadata requests -> UMM/STAC responses",
+      "interfaces": ["rest", "ummStac"]
+    },
+    {
+      "id": "image-analyzer-process",
+      "title": "Image Analyzer Process",
+      "type": "supporting-process",
+      "sourceProject": "image_analyzer_process",
+      "entryPoint": "index.py",
+      "capability": "Analyze imagery",
+      "contract": "image asset and process request -> analytical results",
+      "interfaces": ["kernel", "reana"]
+    },
+    {
+      "id": "mgcp-semantic-router",
+      "title": "MGCP Semantic Router",
+      "type": "supporting-service",
+      "sourceProject": "mgcp_semantic_router",
+      "entryPoint": "app.py / agent.py",
+      "capability": "Route and interpret MGCP semantic queries",
+      "contract": "semantic/API request -> routed MGCP operation and result",
+      "interfaces": ["rest", "kernel"]
+    },
+    {
+      "id": "cesium-cop-dashboard",
+      "title": "Cesium COP Dashboard",
+      "type": "supporting-application",
+      "sourceProject": "cesium_cop_dashboard",
+      "entryPoint": "frontend application",
+      "capability": "Browser-based 3D COP visualization",
+      "contract": "web/STAC/geospatial services -> operational dashboard",
+      "interfaces": ["rest", "stac", "kernel"]
+    }
+  ]
+}

@@ -61,6 +61,10 @@ python3 scripts/run_workflow.py --backend reana --dry-run
 
 See `docs/integration-guide.md`.
 
+QGIS EDI integration boundary:
+
+- `integrations/qgis_edi/` — dynamic contract adapter and service-mode design for QGIS Processing.
+
 ## Geospatial 2026 Artefacts
 
 - Provenance profile package: `geospatial-2026/provenance-profile/`

@@ -24,6 +24,7 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 WORKSPACE_ROOT = BASE_DIR.parents[1]
 WORKFLOW_DIR = WORKSPACE_ROOT / "workflows" / "sentinel2_hsi_pilot"
 WORKFLOW_FILE = WORKFLOW_DIR / "workflow.cwl"
+HARMONIZATION_WORKFLOW_DIR = WORKSPACE_ROOT / "workflows" / "imagery_harmonization"
 RUNNER_SCRIPT = WORKSPACE_ROOT / "scripts" / "run_workflow.py"
 KERNEL_FILE = BASE_DIR / "kernel" / "bblock-kernel.json"
 DEFAULT_AOI = WORKFLOW_DIR / "examples" / "aoi.geojson"
@@ -42,6 +43,45 @@ RESULT_MEDIA_TYPES = {
     "provenance_bundle.json": "application/json",
     "workflow_prov_profile.json": "application/json",
     "provenance_verification.json": "application/json",
+}
+PROCESS_OUTPUTS = {
+    "sentinel2-hsi-pilot": (
+        "hsi_classification.geojson",
+        "classification_summary.json",
+        "stac_item.json",
+        "provenance_bundle.json",
+        "workflow_prov_profile.json",
+        "provenance_verification.json",
+    ),
+    "sentinel2-dji-imagery-harmonization": (
+        "sentinel2_harmonized.tif",
+        "reference_histogram.json",
+        "target_grid.json",
+        "sentinel2_quality.json",
+        "sentinel2_stac_item.json",
+        "sentinel2_provenance.json",
+        "dji_harmonized.tif",
+        "dji_histograms.json",
+        "dji_quality.json",
+        "dji_stac_item.json",
+        "dji_provenance.json",
+        "comparability_report.json",
+    ),
+}
+PROCESS_MEDIA_TYPES = {
+    **RESULT_MEDIA_TYPES,
+    "sentinel2_harmonized.tif": "image/tiff; application=geotiff",
+    "dji_harmonized.tif": "image/tiff; application=geotiff",
+    "reference_histogram.json": "application/json",
+    "target_grid.json": "application/json",
+    "sentinel2_quality.json": "application/json",
+    "sentinel2_stac_item.json": "application/geo+json",
+    "sentinel2_provenance.json": "application/json",
+    "dji_histograms.json": "application/json",
+    "dji_quality.json": "application/json",
+    "dji_stac_item.json": "application/geo+json",
+    "dji_provenance.json": "application/json",
+    "comparability_report.json": "application/json",
 }
 
 
@@ -117,16 +157,19 @@ def _normalize_input_value(value: Any) -> Any:
     return value
 
 
-def _build_workflow_inputs(payload: dict[str, Any], run_id: str) -> dict[str, Any]:
+def _build_workflow_inputs(
+    payload: dict[str, Any], run_id: str, process_id: str = "sentinel2-hsi-pilot"
+) -> dict[str, Any]:
     user_inputs = payload.get("inputs") or {}
 
     normalized: dict[str, Any] = {}
     for key, value in user_inputs.items():
         normalized[key] = _normalize_input_value(value)
 
-    normalized.setdefault("aoi_geojson", {"class": "File", "path": str(DEFAULT_AOI)})
-    normalized.setdefault("acquisition_date", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
-    normalized.setdefault("classifier_model", "hsi-baseline-v1")
+    if process_id == "sentinel2-hsi-pilot":
+        normalized.setdefault("aoi_geojson", {"class": "File", "path": str(DEFAULT_AOI)})
+        normalized.setdefault("acquisition_date", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+        normalized.setdefault("classifier_model", "hsi-baseline-v1")
     normalized.setdefault("run_id", run_id)
 
     if payload.get("layer_name"):
@@ -186,11 +229,15 @@ JOB_STORE = JobStore()
 def _collect_local_results(job_id: str, job_dir: Path) -> dict[str, Any]:
     outputs = {}
     output_dir = job_dir / "outputs"
-    for name, media_type in RESULT_MEDIA_TYPES.items():
+    try:
+        process_id = JOB_STORE.get(job_id)["processID"]
+    except KeyError:
+        process_id = "sentinel2-hsi-pilot"
+    for name in PROCESS_OUTPUTS.get(process_id, RESULT_MEDIA_TYPES):
         if (output_dir / name).is_file():
             outputs[name] = {
                 "href": f"/jobs/{job_id}/artifacts/{name}",
-                "type": media_type,
+                "type": PROCESS_MEDIA_TYPES[name],
             }
     return outputs
 
@@ -271,7 +318,7 @@ def _run_local_pipeline(job_dir: Path, inputs_file: Path) -> subprocess.Complete
     stderr_parts: list[str] = []
     return_code = 0
     for cmd in commands:
-        proc = subprocess.run(cmd, cwd=str(WORKFLOW_DIR), capture_output=True, text=True, check=False)
+        proc = subprocess.run(cmd, cwd=str(workflow_dir), capture_output=True, text=True, check=False)
         stdout_parts.append(proc.stdout)
         stderr_parts.append(proc.stderr)
         if proc.returncode != 0:
@@ -290,13 +337,16 @@ def _run_job(job: dict[str, Any]) -> None:
     job_id = job["jobID"]
     payload = job["payload"]
     backend = job["backend"]
+    process = PROCESSES[job["processID"]]
+    workflow_dir = Path(process["workflow_dir"])
+    workflow_file = workflow_dir / process["workflow_file"]
 
     job_dir = JOB_ROOT / job_id
     output_dir = job_dir / "outputs"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     run_id = payload.get("run_id") or f"oapip-{job_id[:8]}"
-    inputs = _build_workflow_inputs(payload, run_id=run_id)
+    inputs = _build_workflow_inputs(payload, run_id=run_id, process_id=job["processID"])
     inputs_file = job_dir / "workflow-inputs.json"
     with inputs_file.open("w", encoding="utf-8") as f:
         json.dump(inputs, f, indent=2)
@@ -310,7 +360,9 @@ def _run_job(job: dict[str, Any]) -> None:
             "--backend",
             "reana",
             "--workflow-dir",
-            str(WORKFLOW_DIR),
+            str(workflow_dir),
+            "--workflow-file",
+            process["workflow_file"],
             "--reana-name-prefix",
             payload.get("reana_name_prefix", "oapip-kernel"),
             "--no-follow-logs",
@@ -321,7 +373,7 @@ def _run_job(job: dict[str, Any]) -> None:
                 cwltool_bin,
                 "--outdir",
                 str(output_dir),
-                str(WORKFLOW_FILE),
+                str(workflow_file),
                 str(inputs_file),
             ]
         else:
@@ -329,9 +381,17 @@ def _run_job(job: dict[str, Any]) -> None:
 
     JOB_STORE.update(job_id, status="running", command=cmd)
     if backend == "cwltool" and not cwltool_bin:
-        proc = _run_local_pipeline(job_dir=job_dir, inputs_file=inputs_file)
+        if job["processID"] != "sentinel2-hsi-pilot":
+            proc = subprocess.CompletedProcess(
+                args=["cwltool"],
+                returncode=2,
+                stdout="",
+                stderr="cwltool is required for this workflow when the process-specific fallback is unavailable",
+            )
+        else:
+            proc = _run_local_pipeline(job_dir=job_dir, inputs_file=inputs_file)
     else:
-        proc = subprocess.run(cmd, cwd=str(WORKFLOW_DIR), capture_output=True, text=True, check=False)
+        proc = subprocess.run(cmd, cwd=str(workflow_dir), capture_output=True, text=True, check=False)
 
     status = "successful" if proc.returncode == 0 else "failed"
     results = (
@@ -355,6 +415,19 @@ PROCESSES = {
         "title": "Sentinel-2 to HSI Classification (Pilot)",
         "description": "Shared CWL workflow with OSPD provenance outputs and process-type semantics.",
         "version": "0.1.0",
+        "workflow_dir": str(WORKFLOW_DIR),
+        "workflow_file": "workflow.cwl",
+        "input_schema": {
+            "aoi_geojson": {"type": "File", "required": False, "default": str(DEFAULT_AOI)},
+            "acquisition_date": {"type": "string", "required": False},
+            "classifier_model": {"type": "string", "required": False, "default": "hsi-baseline-v1"},
+            "run_id": {"type": "string", "required": False},
+            "layer_name": {"type": "string", "required": False},
+            "image_path": {"type": "string", "required": False},
+        },
+        "output_schema": {
+            name: "File" for name in PROCESS_OUTPUTS["sentinel2-hsi-pilot"]
+        },
         "jobControlOptions": ["async-execute"],
         "outputTransmission": ["value", "reference"],
         "keywords": ["cwl", "provenance", "stac", "ospd", "hsi"],
@@ -365,7 +438,48 @@ PROCESSES = {
                 "geospatial-processes-profile",
             ]
         },
-    }
+    },
+    "sentinel2-dji-imagery-harmonization": {
+        "id": "sentinel2-dji-imagery-harmonization",
+        "title": "Sentinel-2 and DJI Imagery Harmonization",
+        "description": "Executable two-workflow sample for common-grid reprojection, Sentinel-2 enhancement, DJI area downsampling, histogram matching, and quality gates.",
+        "version": "0.1.0",
+        "workflow_dir": str(HARMONIZATION_WORKFLOW_DIR),
+        "workflow_file": "harmonization-workflow.cwl",
+        "jobControlOptions": ["async-execute"],
+        "outputTransmission": ["reference"],
+        "keywords": ["cwl", "reana", "sentinel-2", "dji", "harmonization", "quality"],
+        "kernel": {
+            "buildingBlocks": [
+                "sentinel2-dji-imagery-harmonization",
+                "provenance-profile",
+                "process-type-register",
+            ]
+        },
+        "input_schema": {
+            "source_rgb": {"type": "File", "required": True},
+            "orthomosaic": {"type": "File", "required": True},
+            "target_crs": {"type": "string", "required": True},
+            "target_resolution": {"type": "float", "required": True},
+            "sentinel_input_scale": {"type": "float", "required": False, "default": 10000.0},
+            "dji_input_scale": {"type": "float", "required": False, "default": 10000.0},
+            "method": {"type": "string", "required": False, "default": "bicubic-demo"},
+            "model": {"type": "File", "required": False},
+            "model_card": {"type": "File", "required": False},
+            "expected_model_sha256": {"type": "string", "required": False},
+            "checkpoint_rmse_pixels": {"type": "float", "required": False, "default": 0.0},
+            "cloud_shadow_fraction": {"type": "float", "required": False, "default": 0.0},
+            "min_overlap_pixels": {"type": "int", "required": False, "default": 10000},
+            "max_js_distance": {"type": "float", "required": False, "default": 0.10},
+            "max_clipping_fraction": {"type": "float", "required": False, "default": 0.01},
+            "max_registration_rmse_pixels": {"type": "float", "required": False, "default": 1.0},
+            "max_cloud_shadow_fraction": {"type": "float", "required": False, "default": 0.05},
+            "run_id": {"type": "string", "required": True},
+        },
+        "output_schema": {
+            name: "File" for name in PROCESS_OUTPUTS["sentinel2-dji-imagery-harmonization"]
+        },
+    },
 }
 
 
@@ -455,6 +569,8 @@ def build_openapi() -> dict[str, Any]:
             "provenance-profile",
             "process-type-register",
             "geospatial-processes-profile",
+            "sentinel2-dji-imagery-harmonization",
+            "qgis-edi-plugin-portfolio",
         ],
         "interfaceBindings": list(kernel.get("interfaceBindings", {}).keys()),
         "functionalContract": kernel.get("functionalContract", {}),
@@ -563,22 +679,8 @@ def describe_process(process_id: str) -> dict[str, Any]:
 
     return {
         **proc,
-        "inputs": {
-            "aoi_geojson": {"type": "File", "required": False, "default": str(DEFAULT_AOI)},
-            "acquisition_date": {"type": "string", "required": False},
-            "classifier_model": {"type": "string", "required": False, "default": "hsi-baseline-v1"},
-            "run_id": {"type": "string", "required": False},
-            "layer_name": {"type": "string", "required": False},
-            "image_path": {"type": "string", "required": False},
-        },
-        "outputs": {
-            "classification_geojson": "hsi_classification.geojson",
-            "classification_summary": "classification_summary.json",
-            "stac_item": "stac_item.json",
-            "provenance_bundle": "provenance_bundle.json",
-            "workflow_prov_profile": "workflow_prov_profile.json",
-            "provenance_verification": "provenance_verification.json",
-        },
+        "inputs": proc.get("input_schema", {}),
+        "outputs": proc.get("output_schema", {}),
         "links": [
             {"rel": "execute", "type": "application/json", "href": f"/processes/{process_id}/execution"},
             {"rel": "kernel", "type": "application/json", "href": "/kernel/building-blocks"},
@@ -616,8 +718,10 @@ def execute_process(
     if backend not in ("cwltool", "reana"):
         raise HTTPException(status_code=400, detail="backend must be 'cwltool' or 'reana'")
 
-    if not WORKFLOW_FILE.exists():
-        raise HTTPException(status_code=500, detail=f"Workflow file missing: {WORKFLOW_FILE}")
+    process = PROCESSES[process_id]
+    workflow_file = Path(process["workflow_dir"]) / process["workflow_file"]
+    if not workflow_file.exists():
+        raise HTTPException(status_code=500, detail=f"Workflow file missing: {workflow_file}")
 
     _build_workflow_inputs(payload, run_id=request.run_id or "validation")
 
@@ -686,12 +790,12 @@ def get_job_artifact(job_id: str, filename: str) -> FileResponse:
         raise HTTPException(status_code=404, detail=f"Job not found: {job_id}") from exc
     if job["status"] != "successful":
         raise HTTPException(status_code=409, detail="Artifacts are available only for successful jobs")
-    if filename not in RESULT_MEDIA_TYPES:
+    if filename not in PROCESS_MEDIA_TYPES:
         raise HTTPException(status_code=404, detail="Artifact not found")
     path = JOB_ROOT / job_id / "outputs" / filename
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Artifact not found")
-    return FileResponse(path, media_type=RESULT_MEDIA_TYPES[filename], filename=filename)
+    return FileResponse(path, media_type=PROCESS_MEDIA_TYPES[filename], filename=filename)
 
 
 @app.get("/kernel", tags=["kernel"])

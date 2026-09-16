@@ -77,6 +77,6 @@ The expected checksum must come from a trusted release channel, not from the upl
 
 ## REANA
 
-The two descriptors are `reana-sentinel2.yaml` and `reana-dji.yaml`. A remote deployment must provide a worker image containing the packages in `requirements.txt`. Run Sentinel-2 first, then upload its reference COG, histogram, and target-grid outputs with the DJI inputs and adjust their paths in the DJI job file.
+The descriptors are `reana-sentinel2.yaml`, `reana-dji.yaml`, and `reana-harmonization.yaml`. The combined descriptor runs both stages and the comparability gate in one CWL workflow. A remote deployment must provide a worker image containing the packages in `requirements.txt`; raw DJI frames still require an ODM/WebODM preprocessing service before the `orthomosaic` input.
 
 The bundled descriptors demonstrate the file manifests and output contracts. They do not provision an ODM service or a trained model.

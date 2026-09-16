@@ -1,0 +1,14 @@
+source_rgb:
+  class: File
+  path: sentinel2_rgb_demo.tif
+orthomosaic:
+  class: File
+  path: dji_orthomosaic_demo.tif
+target_crs: EPSG:32632
+target_resolution: 2.5
+sentinel_input_scale: 10000.0
+dji_input_scale: 10000.0
+method: bicubic-demo
+checkpoint_rmse_pixels: 0.25
+cloud_shadow_fraction: 0.0
+run_id: demo-001

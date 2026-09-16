@@ -30,6 +30,12 @@ class SecurityBoundaryTests(unittest.TestCase):
 
     def test_discovery_is_public_but_jobs_require_authentication(self) -> None:
         self.assertEqual(self.client.get("/processes").status_code, 200)
+        process_ids = {item["id"] for item in self.client.get("/processes").json()["processes"]}
+        self.assertIn("sentinel2-dji-imagery-harmonization", process_ids)
+        description = self.client.get("/processes/sentinel2-dji-imagery-harmonization").json()
+        self.assertEqual(description["workflow_file"], "harmonization-workflow.cwl")
+        self.assertIn("orthomosaic", description["inputs"])
+        self.assertIn("comparability_report.json", description["outputs"])
         self.assertEqual(self.client.get("/jobs/missing").status_code, 401)
         self.assertEqual(
             self.client.get("/jobs/missing", headers=self.headers).status_code,
