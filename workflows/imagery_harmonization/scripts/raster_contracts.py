@@ -130,6 +130,8 @@ def stac_item(
     width: int,
     height: int,
     properties: dict[str, Any],
+    *,
+    item_path: str | Path | None = None,
 ) -> dict[str, Any]:
     grid = grid_contract(crs, transform, width, height)
     west, south, east, north = transform_bounds(crs, "EPSG:4326", *grid["extent"])
@@ -157,7 +159,10 @@ def stac_item(
             "proj:transform": list(transform)[:6],
             **properties,
         },
-        "links": [],
+        "links": (
+            [{"rel": "self", "href": Path(item_path).name, "type": "application/geo+json"}]
+            if item_path is not None else []
+        ),
         "assets": {
             "data": {
                 "href": Path(raster_path).name,

@@ -219,6 +219,7 @@ def main() -> int:
             "processing:method": args.method,
             "gsd": args.target_resolution,
         },
+        item_path=stac_path,
     )
     item["assets"]["histogram"] = {
         "href": histogram_path.name,

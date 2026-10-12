@@ -1,6 +1,6 @@
 {
   "id": "ospd-geospatial-bblocks-kernel",
-  "title": "OSPD 2026 Geospatial Building Blocks Kernel",
+  "title": "Geospatial Building Blocks Kernel",
   "description": "Kernel model that links process execution, provenance profile outputs, and process-type semantics.",
   "version": "0.1.0",
   "functionalContract": {
@@ -44,6 +44,13 @@
     "conformanceClasses": [
       {
         "id": "functional-core",
+        "uri": "https://luciocola.github.io/geospatial-building-block/1.0/conf/core",
+        "specification": "../../gbb-core/description.md",
+        "dependsOn": [
+          "ogc.ogc-utils.json-link",
+          "ogc.api.common.landingPage",
+          "ogc.api.common.confClasses"
+        ],
         "requires": ["minimumSemantics", "algorithmContract", "evidenceContract.required"]
       },
       {
@@ -112,9 +119,7 @@
           "conformanceClasses": [
             {"id": "core", "uri": "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/core"},
             {"id": "json", "uri": "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/json"},
-            {"id": "oas30", "uri": "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/oas30"},
-            {"id": "job-list", "uri": "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/job-list"},
-            {"id": "callback", "uri": "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/callback"}
+            {"id": "oas30", "uri": "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/oas30"}
           ]
         }
       ],

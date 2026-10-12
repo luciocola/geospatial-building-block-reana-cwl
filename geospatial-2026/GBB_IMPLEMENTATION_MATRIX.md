@@ -1,12 +1,32 @@
-# OSPD 2026 CFP Compliance Matrix (Current Workspace)
+# GBB Implementation Matrix (Current Workspace)
 
 ## Scope
 
-This matrix maps implemented artefacts to OSPD 2026 activities and roles.
+This matrix maps implemented artefacts to GBB capabilities and implementation readiness.
 
-## Activity Coverage
+## Capability Coverage
 
-### Activity 1: Generic Provenance Building Block
+### Core Conformance and STAC Navigation
+
+Implemented:
+
+- [Core requirements](gbb-core/description.md), evidence schema and example.
+- Kernel job Catalogs with Item backlinks and authenticated navigation.
+- Relative writer `self` links and canonical `self`/`root` links in served Items.
+- STAC navigation and producer regression tests in
+  `geospatial-processes-kernel/service/test_stac_outputs.py`.
+
+Status: Implemented locally; not independent standards certification.
+
+### Optional Provenance Conformance
+
+- [Provenance conformance draft](gbb-provenance/description.md).
+- Existing profile example validated with date-time format checking.
+- Producer normalization, execution identity and semantic validation remain.
+
+Status: Draft; not advertised by the kernel.
+
+### Generic Provenance Building Block
 
 Implemented:
 
@@ -17,7 +37,7 @@ Implemented:
 
 Status: Implemented (pilot-grade).
 
-### Activity 2: Workflow Profiling
+### Workflow Profiling
 
 Implemented:
 
@@ -27,7 +47,7 @@ Implemented:
 
 Status: Implemented.
 
-### Activity 3: Process-Type Register Setup
+### Process-Type Register Setup
 
 Implemented:
 
@@ -40,7 +60,7 @@ Implemented:
 
 Status: Implemented (prototype, file-based).
 
-### Activity 4: Register Population
+### Register Population
 
 Implemented:
 
@@ -50,17 +70,17 @@ Implemented:
 
 Status: Implemented.
 
-### Activity 5: Documentation
+### Documentation
 
 Implemented:
 
 - `geospatial-2026/README.md`
-- `CFP_COMPLIANCE_MATRIX.md`
+- [GBB_IMPLEMENTATION_MATRIX.md](GBB_IMPLEMENTATION_MATRIX.md)
 - Updated shared workflow README files
 
 Status: Implemented.
 
-### Activity 6: Building Blocks to Profile Documentation (optional)
+### Building Blocks to Profile Documentation (optional)
 
 Partially implemented:
 
@@ -69,9 +89,9 @@ Partially implemented:
 
 Status: Partial.
 
-## Role Readiness
+## Implementation Readiness
 
-### D100 Workflow Profiler
+### Workflow Profiling
 
 Status: Ready (pilot-grade)
 
@@ -79,7 +99,7 @@ Evidence:
 
 - Independent workflow profiling artefacts under `workflows/sentinel2_hsi_pilot` and `geospatial-2026/provenance-profile`.
 
-### D110 Register Implementer
+### Register Implementation
 
 Status: Partially ready
 
@@ -88,7 +108,7 @@ Evidence:
 - Register model/governance/mappings implemented as prototype files.
 - Remaining gap: deploy as running OGC API - Records profile endpoint and handover-ready runtime.
 
-### D120 OGC API Processes Profiler
+### OGC API Processes Profiling
 
 Status: Ready for demonstration
 
@@ -98,7 +118,7 @@ Evidence:
   - `ogc-api-processes-profile/examples/execution-metadata-example.json`
   - `ogc-api-processes-profile/schema/ogc-process-execution-metadata.schema.json`
 
-## Remaining Work for Full Bid Strength
+## Remaining Work for Publication Readiness
 
 1. Deploy process-type register as a running OGC API - Records service.
 2. Add automated validation scripts for profile schema and example conformance.

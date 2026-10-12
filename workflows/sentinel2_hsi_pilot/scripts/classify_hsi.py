@@ -74,6 +74,9 @@ def main() -> None:
             "coordinates": [[[14.30, 40.80], [14.34, 40.80], [14.34, 40.83], [14.30, 40.83], [14.30, 40.80]]]
         },
         "bbox": [14.30, 40.80, 14.34, 40.83],
+        "links": [
+            {"rel": "self", "href": "stac_item.json", "type": "application/geo+json"}
+        ],
         "properties": {
             "datetime": datetime.now(timezone.utc).isoformat(),
             "processing:facility": "reana",

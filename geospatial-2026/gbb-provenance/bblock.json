@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/opengeospatial/bblocks-postprocess/master/ogc/bblocks/metadata-schema.yaml",
+  "itemIdentifier": "ogc.gbb.provenance",
+  "name": "Geospatial Building Block - Provenance (draft)",
+  "abstract": "Optional draft conformance class for execution-linked PROV-JSON evidence using the GBB processing activity provenance profile.",
+  "status": "under-development",
+  "version": "1.0.0",
+  "itemClass": "schema",
+  "scope": "pilot",
+  "conformanceClasses": [
+    "https://luciocola.github.io/geospatial-building-block/1.0/conf/provenance"
+  ],
+  "dependsOn": [
+    "ogc.gbb.core",
+    "ogc.gbb.provenance-profile.processing-activities",
+    "ogc.ogc-utils.prov"
+  ],
+  "schema": {
+    "application/json": "../provenance-profile/schema/provenance-profile.schema.json"
+  },
+  "sourceSchema": "../provenance-profile/schema/provenance-profile.schema.json",
+  "tags": ["gbb", "provenance", "prov", "conformance", "draft"]
+}

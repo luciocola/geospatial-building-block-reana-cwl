@@ -606,9 +606,19 @@ def build_openapi() -> dict[str, Any]:
 app.openapi = build_openapi
 
 
+GBB_CORE_CONFORMANCE = "https://luciocola.github.io/geospatial-building-block/1.0/conf/core"
+
+
+def _prefers_html(request: Request) -> bool:
+    accept = request.headers.get("accept", "")
+    return "text/html" in accept and "application/json" not in accept
+
+
 @app.get("/")
-def root_redirect() -> RedirectResponse:
-    return RedirectResponse(url="/swagger", status_code=307)
+def root(request: Request) -> Any:
+    if _prefers_html(request):
+        return RedirectResponse(url="/swagger", status_code=307)
+    return landing_page()
 
 
 @app.get("/landing")
@@ -617,7 +627,9 @@ def landing_page() -> dict[str, Any]:
         "title": "OSPD Geospatial Processes Facade",
         "description": "Local facade exposing CWL workflows through geospatial interfaces and linking Geospatial Building Blocks.",
         "links": [
-            {"rel": "self", "type": "application/json", "href": "/landing"},
+            {"rel": "self", "type": "application/json", "href": "/"},
+            {"rel": "service-desc", "type": "application/vnd.oai.openapi+json;version=3.0", "href": "/swagger.json"},
+            {"rel": "service-doc", "type": "text/html", "href": "/swagger"},
             {"rel": "ui", "type": "text/html", "href": "/swagger"},
             {"rel": "conformance", "type": "application/json", "href": "/conformance"},
             {"rel": "processes", "type": "application/json", "href": "/processes"},
@@ -635,8 +647,7 @@ def conformance() -> dict[str, Any]:
             "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/core",
             "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/json",
             "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/oas30",
-            "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/job-list",
-            "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/callback",
+            GBB_CORE_CONFORMANCE,
         ]
     }
 
@@ -773,17 +784,61 @@ def get_job_results(job_id: str) -> dict[str, Any]:
     if job["status"] not in ("successful", "failed"):
         raise HTTPException(status_code=409, detail=f"Job is still {job['status']}")
 
+    results = job.get("results", {})
+    validation_report = results.get("validation.json", {}).get("href")
     return {
         "jobID": job["jobID"],
+        "processID": job["processID"],
         "status": job["status"],
         "returnCode": job["returnCode"],
-        "results": job.get("results", {}),
+        "inputs": job.get("payload", {}).get("inputs", {}),
+        "results": results,
+        "validation": {
+            "passed": job["status"] == "successful" and job["returnCode"] == 0,
+            **({"report": validation_report} if validation_report else {}),
+        },
         "logsAvailable": bool(job.get("stdout") or job.get("stderr")),
     }
 
 
+STAC_ITEM_FILES = frozenset({
+    "stac_item.json", "cop_item.json", "sentinel2_stac_item.json", "dji_stac_item.json",
+})
+
+
+@app.get("/jobs/{job_id}/catalog", tags=["jobs"])
+def get_job_catalog(job_id: str, request: Request) -> JSONResponse:
+    try:
+        job = JOB_STORE.get(job_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}") from exc
+    if job["status"] != "successful":
+        raise HTTPException(status_code=409, detail="Catalog is available only for successful jobs")
+    catalog_url = str(request.url_for("get_job_catalog", job_id=job_id))
+    item_names = sorted(STAC_ITEM_FILES.intersection(
+        job.get("results", {}), PROCESS_OUTPUTS[job["processID"]],
+    ))
+    return JSONResponse({
+        "type": "Catalog",
+        "stac_version": "1.0.0",
+        "id": job_id,
+        "description": f"STAC outputs of {job['processID']} execution {job_id}",
+        "links": [
+            {"rel": rel, "href": catalog_url, "type": "application/json"}
+            for rel in ("self", "root")
+        ] + [
+            {
+                "rel": "item",
+                "href": str(request.url_for("get_job_artifact", job_id=job_id, filename=name)),
+                "type": "application/geo+json",
+            }
+            for name in item_names
+        ],
+    })
+
+
 @app.get("/jobs/{job_id}/artifacts/{filename}", tags=["jobs"])
-def get_job_artifact(job_id: str, filename: str) -> FileResponse:
+def get_job_artifact(job_id: str, filename: str, request: Request) -> Response:
     try:
         job = JOB_STORE.get(job_id)
     except KeyError as exc:
@@ -795,6 +850,37 @@ def get_job_artifact(job_id: str, filename: str) -> FileResponse:
     path = JOB_ROOT / job_id / "outputs" / filename
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Artifact not found")
+    if filename in STAC_ITEM_FILES:
+        try:
+            item = load_json(path)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise HTTPException(status_code=500, detail="STAC output cannot be read") from exc
+        if (
+            not isinstance(item, dict)
+            or item.get("type") != "Feature"
+            or not isinstance(item.get("stac_version"), str)
+        ):
+            raise HTTPException(status_code=500, detail="Output is not a STAC Item")
+        links = item.get("links", [])
+        if not isinstance(links, list) or any(
+            not isinstance(link, dict)
+            or not isinstance(link.get("rel"), str)
+            or not isinstance(link.get("href"), str)
+            for link in links
+        ):
+            raise HTTPException(status_code=500, detail="STAC output has invalid links")
+        catalog_url = str(request.url_for("get_job_catalog", job_id=job_id))
+        item["links"] = [
+            link for link in links if link["rel"] not in ("self", "root")
+        ] + [
+            {
+                "rel": "self",
+                "href": str(request.url_for("get_job_artifact", job_id=job_id, filename=filename)),
+                "type": "application/geo+json",
+            },
+            {"rel": "root", "href": catalog_url, "type": "application/json"},
+        ]
+        return JSONResponse(item, media_type="application/geo+json")
     return FileResponse(path, media_type=PROCESS_MEDIA_TYPES[filename], filename=filename)
 
 

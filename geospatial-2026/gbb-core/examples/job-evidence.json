@@ -1,0 +1,17 @@
+{
+  "jobID": "5b0e7f1e-2f0a-4c8e-9d1e-3c1b2a7f9e10",
+  "processID": "sentinel2-hsi-pilot",
+  "status": "successful",
+  "returnCode": 0,
+  "inputs": {
+    "aoi_geojson": {"href": "workflows/sentinel2_hsi_pilot/examples/aoi.geojson"},
+    "acquisition_date": "2026-07-10",
+    "classifier_model": "hsi-baseline-v1"
+  },
+  "results": {
+    "stac_item.json": {"href": "/jobs/5b0e7f1e-2f0a-4c8e-9d1e-3c1b2a7f9e10/artifacts/stac_item.json", "type": "application/geo+json"},
+    "provenance.json": {"href": "/jobs/5b0e7f1e-2f0a-4c8e-9d1e-3c1b2a7f9e10/artifacts/provenance.json", "type": "application/json"}
+  },
+  "validation": {"passed": true},
+  "logsAvailable": true
+}

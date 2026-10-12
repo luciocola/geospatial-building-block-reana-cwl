@@ -1,25 +1,56 @@
-# OSPD 2026 Alignment Package
+# Geospatial Building Block (GBB) Package
 
-This package implements the minimum artefacts required to align the shared REANA/CWL approach with OSPD 2026 CFP activities.
+This package implements the minimum Geospatial Building Block artefacts on top of the shared REANA/CWL approach.
 
-## Coverage by CFP Activity
+## Capability Coverage
 
-- Activity 1 (Generic Provenance Building Block):
+- Generic Provenance Building Block:
   - `provenance-profile/` with schema, JSON-LD context, examples, and building-block metadata.
-- Activity 2 (Workflow Profiling):
+- Workflow Profiling:
   - `workflows/sentinel2_hsi_pilot` emits provenance with controlled process-type references.
-- Activity 3 (Process-Type Register Setup):
+- Process-Type Register Setup:
   - `process-type-register/` includes register model, governance, OGC API Records-like payload, and DCAT catalog.
-- Activity 4 (Register Population):
+- Register Population:
   - Initial process-type entries + federation mappings (`exactMatch`, `closeMatch`, `broader`, `narrower`).
-- Activity 5/6 (Documentation and publication readiness):
+- Documentation and publication readiness:
   - This README plus per-package metadata and examples.
-- D120 support (OGC API Processes profiler):
+- OGC API Processes profiling:
   - `ogc-api-processes-profile/examples/` with input provenance references and registered process types.
 - Geospatial Processes facade kernel:
   - `geospatial-processes-kernel/` exposing `/processes` and `/jobs` plus `/kernel/building-blocks` to bind execution, provenance profile, and process-type register semantics.
 - Operational trust-enabled BB model:
   - `operational-trust-bbs/` defining executable Building Blocks for data certificates, process contracts, execution validation, and result certificates.
+- GBB core conformance class:
+  - `gbb-core/` defines `https://luciocola.github.io/geospatial-building-block/1.0/conf/core`.
+  - The class builds on (`dependsOn`) only the OGC building blocks that the services actually satisfy: `ogc.ogc-utils.json-link`, `ogc.api.common.landingPage` and `ogc.api.common.confClasses`.
+  - Requirements, schema and example are in that directory. The executable abstract tests are in `geospatial-processes-kernel/service/test_gbb_conformance.py`.
+
+## GBB Core Conformance
+
+Both services return the JSON landing page at `GET /`, including `service-desc` and `service-doc` links. Browsers (`Accept: text/html`) are still redirected to Swagger.
+
+STAC workflow outputs include a relative `self` link. When an Item is retrieved
+through the kernel, its `self` and `root` links point to the served Item and the
+authenticated STAC Catalog at `/jobs/{jobId}/catalog`. Stored artifacts are not
+rewritten, and non-STAC downloads retain their existing behavior.
+
+The [provenance conformance class](gbb-provenance/description.md) is a separate
+draft. It is listed as a draft in the QGIS building-block catalog, not advertised
+as implemented by `/conformance`. Existing provenance summaries still need
+normalization and execution-linked validation. Liability remains optional.
+
+The kernel `/conformance` lists Processes core, json and oas30, plus GBB core;
+these declarations are not independent OGC certification. Run the local suites
+in a test environment:
+
+```bash
+cd geospatial-processes-kernel/service
+python -m pip install -r requirements-test.txt
+python -m unittest test_gbb_conformance test_stac_outputs test_security
+```
+
+The [implementation matrix](GBB_IMPLEMENTATION_MATRIX.md) describes capability
+coverage and remaining publication work.
 
 ## Liability/Claims Reuse
 

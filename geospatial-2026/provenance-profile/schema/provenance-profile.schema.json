@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://example.org/ospd/2026/provenance-profile.schema.json#",
-  "title": "OSPD 2026 Processing Activity Provenance Profile",
+  "title": "GBB Processing Activity Provenance Profile",
   "description": "Constrained PROV-JSON profile requiring process-type references for activities.",
   "type": "object",
   "required": [

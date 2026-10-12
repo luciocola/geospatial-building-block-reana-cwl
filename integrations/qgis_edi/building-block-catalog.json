@@ -17,6 +17,22 @@
     "reana": "optional remote execution",
     "odm": "optional DJI photogrammetry service"
   },
+  "conformanceSpecifications": [
+    {
+      "id": "gbb-core",
+      "uri": "https://luciocola.github.io/geospatial-building-block/1.0/conf/core",
+      "status": "under-development",
+      "documentation": "../../geospatial-2026/gbb-core/description.md",
+      "scope": "kernel service; not a blanket conformance claim for portfolio plugins"
+    },
+    {
+      "id": "gbb-provenance",
+      "uri": "https://luciocola.github.io/geospatial-building-block/1.0/conf/provenance",
+      "status": "draft",
+      "documentation": "../../geospatial-2026/gbb-provenance/description.md",
+      "scope": "optional specification; not advertised by the kernel"
+    }
+  ],
   "buildingBlocks": [
     {
       "id": "qgis-cop-defence",

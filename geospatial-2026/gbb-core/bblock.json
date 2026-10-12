@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/opengeospatial/bblocks-postprocess/master/ogc/bblocks/metadata-schema.yaml",
+  "itemIdentifier": "ogc.gbb.core",
+  "name": "Geospatial Building Block - Core",
+  "abstract": "Minimal conformance class for a Geospatial Building Block (GBB): discoverable service, honest conformance declaration, declared process contract, structured failures and machine-readable execution evidence.",
+  "status": "under-development",
+  "version": "1.0.0",
+  "itemClass": "api",
+  "scope": "pilot",
+  "conformanceClasses": [
+    "https://luciocola.github.io/geospatial-building-block/1.0/conf/core"
+  ],
+  "tags": [
+    "ospd",
+    "gbb",
+    "ogcapi-processes",
+    "conformance",
+    "evidence"
+  ],
+  "dependsOn": [
+    "ogc.ogc-utils.json-link",
+    "ogc.api.common.landingPage",
+    "ogc.api.common.confClasses"
+  ],
+  "schema": {
+    "application/json": "schema/job-evidence.schema.json"
+  },
+  "sourceSchema": "schema/job-evidence.schema.json",
+  "examples": [
+    {
+      "title": "Execution evidence returned by GET /jobs/{jobId}/results",
+      "snippets": [
+        {
+          "language": "json",
+          "ref": "examples/job-evidence.json"
+        }
+      ]
+    }
+  ]
+}

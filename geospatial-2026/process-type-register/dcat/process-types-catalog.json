@@ -4,7 +4,7 @@
     "dcterms": "http://purl.org/dc/terms/"
   },
   "@type": "dcat:Catalog",
-  "dcterms:title": "OSPD 2026 Process-Type Register",
+  "dcterms:title": "GBB Process-Type Register",
   "dcterms:description": "Controlled process-type terms for provenance activities.",
   "dcat:dataset": [
     {

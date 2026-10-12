@@ -183,6 +183,7 @@ def main() -> int:
             "processing:radiometric_adjustment": "masked-empirical-cdf",
             "gsd": abs(target_transform.a),
         },
+        item_path=stac_path,
     )
     item["assets"]["histograms"] = {
         "href": histograms_path.name,

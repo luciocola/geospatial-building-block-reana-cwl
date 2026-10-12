@@ -2,7 +2,7 @@
 
 ## Scope
 
-This governance model covers lifecycle management of process-type terms used by OSPD 2026 provenance profiles.
+This governance model covers lifecycle management of process-type terms used by GBB provenance profiles.
 
 ## Roles
 

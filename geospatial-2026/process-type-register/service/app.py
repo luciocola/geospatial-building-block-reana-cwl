@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import PlainTextResponse, RedirectResponse
 
@@ -28,7 +28,7 @@ def load_records() -> dict[str, Any]:
 
 
 app = FastAPI(
-    title="OSPD 2026 Process-Type Register API",
+    title="GBB Process-Type Register API",
     description="Local OGC API - Records-like endpoint for process-type register prototyping.",
     version="0.1.0",
 )
@@ -43,22 +43,27 @@ def swagger_json() -> dict[str, Any]:
 def swagger_ui():
     return get_swagger_ui_html(
         openapi_url="/swagger.json",
-        title="OSPD 2026 Process-Type Register Swagger UI",
+        title="GBB Process-Type Register Swagger UI",
     )
 
 
 @app.get("/")
-def root_redirect() -> RedirectResponse:
-    return RedirectResponse(url="/swagger", status_code=307)
+def root(request: Request) -> Any:
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept and "application/json" not in accept:
+        return RedirectResponse(url="/swagger", status_code=307)
+    return landing_page()
 
 
 @app.get("/landing")
 def landing_page() -> dict[str, Any]:
     return {
-        "title": "OSPD 2026 Process-Type Register API",
+        "title": "GBB Process-Type Register API",
         "description": "Local register endpoint exposing OGC API - Records-like resources.",
         "links": [
-            {"rel": "self", "type": "application/json", "href": "/landing"},
+            {"rel": "self", "type": "application/json", "href": "/"},
+            {"rel": "service-desc", "type": "application/vnd.oai.openapi+json;version=3.0", "href": "/swagger.json"},
+            {"rel": "service-doc", "type": "text/html", "href": "/swagger"},
             {"rel": "ui", "type": "text/html", "href": "/swagger"},
             {"rel": "conformance", "type": "application/json", "href": "/conformance"},
             {"rel": "data", "type": "application/json", "href": "/collections"},
@@ -131,7 +136,17 @@ def process_type_schema() -> dict[str, Any]:
 
 
 @app.get("/collections/process-types/items")
-def items(limit: int = Query(default=100, ge=1, le=1000), q: str | None = None) -> dict[str, Any]:
+def items(
+    limit: int = Query(default=100, ge=1, le=1000),
+    q: str | None = None,
+    bbox: str | None = None,
+    datetime: str | None = None,
+) -> dict[str, Any]:
+    if bbox is not None or datetime is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Process-type records are not spatial or temporal; bbox and datetime filters are not supported",
+        )
     records = load_records()
     features = records.get("features", [])
 

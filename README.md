@@ -88,6 +88,9 @@ QGIS EDI integration boundary:
 - Process-type register prototype: `geospatial-2026/process-type-register/`
 - OGC API Processes profiling example: `geospatial-2026/ogc-api-processes-profile/`
 - Operational trust-enabled Building Blocks: `geospatial-2026/operational-trust-bbs/`
+- GBB core specification and STAC navigation: [GBB core](geospatial-2026/gbb-core/description.md)
+- Optional draft provenance class: [GBB provenance](geospatial-2026/gbb-provenance/description.md)
+- Capability coverage: [GBB implementation matrix](geospatial-2026/GBB_IMPLEMENTATION_MATRIX.md)
 - Sentinel-2/DJI harmonization Building Block example: `docs/sentinel2-dji-harmonization-example.md`
 - Sentinel-2/DJI architecture slides: `docs/sentinel2-dji-harmonization-architecture.pptx`
 - Refreshed Building Block explanation deck: `docs/geospatial-building-block-harmonization-v2.pptx`
